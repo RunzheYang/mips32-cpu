@@ -137,6 +137,62 @@ module decode (
                                     src2_read_out <= `True;
                                     inst_valid    <= `InstValid;
                                 end
+                                `MOVZ: begin
+                                    aluop_out     <= `MOVZ_OP;
+                                    alusel_out    <= `RES_MOVE;
+                                    src1_read_out <= `True;
+                                    src2_read_out <= `True;
+                                    inst_valid    <= `InstValid;
+                                    if (src2_data_out == `ZeroWord) begin
+                                        wreg_out <= `True;
+                                    end else begin
+                                        wreg_out <= `False;
+                                    end
+                                end
+                                `MOVN: begin
+                                    aluop_out     <= `MOVN_OP;
+                                    alusel_out    <= `RES_MOVE;
+                                    src1_read_out <= `True;
+                                    src2_read_out <= `True;
+                                    inst_valid    <= `InstValid;
+                                    if (src2_data_out != `ZeroWord) begin
+                                        wreg_out <= `True;
+                                    end else begin
+                                        wreg_out <= `False;
+                                    end
+                                end
+                                `MFHI: begin
+                                    wreg_out      <= `True;
+                                    aluop_out     <= `MFHI_OP;
+                                    alusel_out    <= `RES_MOVE;
+                                    src1_read_out <= `False;
+                                    src2_read_out <= `False;
+                                    inst_valid    <= `InstValid;
+                                end
+                                `MFLO: begin
+                                    wreg_out      <= `True;
+                                    aluop_out     <= `MFLO_OP;
+                                    alusel_out    <= `RES_MOVE;
+                                    src1_read_out <= `False;
+                                    src2_read_out <= `False;
+                                    inst_valid    <= `InstValid;
+                                end
+                                `MTHI: begin
+                                    wreg_out      <= `False;
+                                    aluop_out     <= `MTHI_OP;
+                                    alusel_out    <= `RES_MOVE;
+                                    src1_read_out <= `True;
+                                    src2_read_out <= `False;
+                                    inst_valid    <= `InstValid;
+                                end
+                                `MTLO: begin
+                                    wreg_out      <= `False;
+                                    aluop_out     <= `MTLO_OP;
+                                    alusel_out    <= `RES_MOVE;
+                                    src1_read_out <= `True;
+                                    src2_read_out <= `False;
+                                    inst_valid    <= `InstValid;
+                                end
                                 default: begin 
                                 end
                             endcase

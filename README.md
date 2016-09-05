@@ -1,2 +1,5 @@
 # mips32-cpu
-ACMCA project
+- 2014 ACMCA Summer Project
+- Main reference: [this blog](http://blog.csdn.net/leishangwen/article/category/5723475)
+
+- Support logical, shift and move operations so far.

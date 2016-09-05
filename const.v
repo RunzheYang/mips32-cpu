@@ -11,13 +11,22 @@
 	`define OR 		6'b100101
 	`define XOR 	6'b100110
 	`define NOR 	6'b100111
+
 	`define SLL		6'b000000
 	`define SRL		6'b000010
 	`define SRA		6'b000011
 	`define SLLV	6'b000100
 	`define SRLV	6'b000110
 	`define SRAV	6'b000111
+
 	`define SYNC	6'b001111
+
+	`define MOVZ	6'b001010
+	`define MOVN	6'b001011
+	`define MFHI	6'b010000
+	`define MFLO	6'b010001
+	`define MTHI	6'b010010
+	`define MTLO	6'b010011
 
 `define ANDI		6'b001100
 `define	ORI			6'b001101
@@ -34,11 +43,18 @@
 `define	SLL_OP		8'b00000000
 `define SRL_OP		8'b00000010
 `define SRA_OP		8'b00000011
+`define MOVZ_OP		8'b00001010
+`define MOVN_OP		8'b00001011
+`define MFHI_OP		8'b00010000
+`define MFLO_OP		8'b00010001
+`define MTHI_OP		8'b00010010
+`define MTLO_OP		8'b00010011
 `define NOP_OP		8'b00000000
 
 //ALU selection
 `define RES_LOGIC	3'b001
 `define RES_SHIFT	3'b010
+`define RES_MOVE	3'b011
 `define RES_NOP		3'b000
 
 

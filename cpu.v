@@ -37,28 +37,48 @@ module cpu (
 	wire[`RegAddrBus]	ex_dest_addr_out;
 	wire[`RegBus]		ex_dest_data_out;
 
+	wire[`RegBus]		ex_hi_out;
+	wire[`RegBus]		ex_lo_out;
+	wire				ex_whilo_out;
+
 	// -> MEM
 	wire				mem_wreg_in;
 	wire[`RegAddrBus]	mem_dest_addr_in;
 	wire[`RegBus]		mem_dest_data_in;
+
+	wire[`RegBus]		mem_hi_in;
+	wire[`RegBus]		mem_lo_in;
+	wire				mem_whilo_in;
 
 	// MEM ->
 	wire				mem_wreg_out;
 	wire[`RegAddrBus]	mem_dest_addr_out;
 	wire[`RegBus]		mem_dest_data_out;
 
+	wire[`RegBus]		mem_hi_out;
+	wire[`RegBus]		mem_lo_out;
+	wire				mem_whilo_out;
+
 	// -> WB
 	wire				wb_wreg_in;
 	wire[`RegAddrBus]	wb_dest_addr_in;
 	wire[`RegBus]		wb_dest_data_in;
 
-	// Regfile for ID
+	wire[`RegBus]		wb_hi_in;
+	wire[`RegBus]		wb_lo_in;
+	wire				wb_whilo_in;
+
+	// Reg_file
 	wire				reg1_read;
 	wire				reg2_read;
 	wire[`RegBus]		reg1_data;
 	wire[`RegBus]		reg2_data;
 	wire[`RegAddrBus]	reg1_addr;
 	wire[`RegAddrBus]	reg2_addr;
+
+	// HILO
+	wire[`RegBus]		hi_data;
+	wire[`RegBus]		lo_data;
 
 
 	// pc_reg instantiation
@@ -129,6 +149,19 @@ module cpu (
 			.rdata2	(reg2_data)
 		);
 
+	// HILO instantiation
+	hilo_reg hilo_reg0 (
+			.clk	(clk),
+			.rst	(rst),
+
+			.we		(wb_whilo_in),
+			.hi_in	(wb_hi_in),
+			.lo_in	(wb_lo_in),
+
+			.hi_out	(hi_data),
+			.lo_out	(lo_data)
+		);
+
 	// id/ex instantiation
 	id_ex id_ex0 (
 			.clk	(clk),
@@ -160,9 +193,24 @@ module cpu (
 			.dest_addr_in	(ex_dest_addr_in),
 			.wreg_in		(ex_wreg_in),
 
+			.hi_in	(hi_data),
+			.lo_in	(lo_data),
+
+			.wb_hi_in		(wb_hi_in),
+			.wb_lo_in		(wb_lo_in),
+			.wb_whilo_in	(wb_whilo_in),
+
+			.mem_hi_in		(mem_hi_out),
+			.mem_lo_in		(mem_lo_out),
+			.mem_whilo_in	(mem_whilo_out),
+
 			.dest_addr_out	(ex_dest_addr_out),
 			.wreg_out		(ex_wreg_out),
-			.dest_data_out	(ex_dest_data_out)
+			.dest_data_out	(ex_dest_data_out),
+
+			.hi_out		(ex_hi_out),
+			.lo_out		(ex_lo_out),
+			.whilo_out	(ex_whilo_out)
 		);
 
 	// ex/mem instantiation
@@ -174,9 +222,17 @@ module cpu (
 			.ex_wreg		(ex_wreg_out),
 			.ex_dest_data	(ex_dest_data_out),
 
+			.ex_hi 			(ex_hi_out),
+			.ex_lo 			(ex_lo_out),
+			.ex_whilo		(ex_whilo_out),
+
 			.mem_dest_addr	(mem_dest_addr_in),
 			.mem_wreg		(mem_wreg_in),
-			.mem_dest_data	(mem_dest_data_in)
+			.mem_dest_data	(mem_dest_data_in),
+
+			.mem_hi 		(mem_hi_in),
+			.mem_lo 		(mem_lo_in),
+			.mem_whilo 		(mem_whilo_in)
 		);
 
 	// memory instantiation
@@ -187,9 +243,17 @@ module cpu (
 			.wreg_in		(mem_wreg_in),
 			.dest_data_in	(mem_dest_data_in),
 
+			.hi_in		(mem_hi_in),
+			.lo_in		(mem_lo_in),
+			.whilo_in 	(mem_whilo_in),
+
 			.dest_addr_out	(mem_dest_addr_out),
 			.wreg_out		(mem_wreg_out),
-			.dest_data_out	(mem_dest_data_out)
+			.dest_data_out	(mem_dest_data_out),
+
+			.hi_out		(mem_hi_out),
+			.lo_out		(mem_lo_out),
+			.whilo_out	(mem_whilo_out)
 		);
 
 	// mem/wb instantiation
@@ -201,9 +265,17 @@ module cpu (
 			.mem_wreg		(mem_wreg_out),
 			.mem_dest_data	(mem_dest_data_out),
 
+			.mem_hi 	(mem_hi_out),
+			.mem_lo 	(mem_lo_out),
+			.mem_whilo 	(mem_whilo_out),
+
 			.wb_dest_addr	(wb_dest_addr_in),
 			.wb_wreg		(wb_wreg_in),
-			.wb_dest_data	(wb_dest_data_in)
+			.wb_dest_data	(wb_dest_data_in),
+
+			.wb_hi 		(wb_hi_in),
+			.wb_lo 		(wb_lo_in),
+			.wb_whilo 	(wb_whilo_in)
 		);
 
 endmodule
