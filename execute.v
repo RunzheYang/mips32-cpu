@@ -40,6 +40,20 @@ module execute (
 	reg[`RegBus] HI;
 	reg[`RegBus] LO;
 
+	// variables for arithmetic alu
+	wire			ov_sum;
+	wire			src1_eq_src2;
+	wire			src1_lt_src2;
+	reg[`RegBus]	arithmeticres;
+	wire[`RegBus]	src2_in_mux;
+	wire[`RegBus]	src1_in_not;
+	wire[`RegBus]	result_sum;
+	wire[`RegBus]	opdata1_mult; // a * b, a
+	wire[`RegBus]	opdata2_mult; // a * b, b
+	wire[`DoubleRegBus]	hilo_temp; // 64-bit temp result
+	reg[`DoubleRegBus]	mulres;
+	
+
 	// alu operations LOGIC
 	always @( * ) begin
 		if (rst == `RstEnable) begin
@@ -125,10 +139,126 @@ module execute (
 		end
 	end
 
+	// if aluop is sub or slt, src2_in_mux = (~src2) + 1
+	// otherwise src2
+	assign src2_in_mux = ((aluop_in == `SUB_OP)  
+					||  (aluop_in == `SUBU_OP) 
+					|| (aluop_in == `SLT_OP)) ? 
+					(~src2_data_in) + 1 : src2_data_in;
+
+	assign result_sum = src1_data_in + src2_in_mux;
+
+	// check whether overflowed
+	// 1. pos + pos = neg, 2. neg + neg = pos.
+	assign ov_sum = ((!src1_data_in[31] && !src2_in_mux[31]) && result_sum[31]) 
+					||((src1_data_in[31] && src2_in_mux[31]) && (!result_sum[31]));
+
+	// judge whether src1 < src2
+	// if aluop is slt, then 1. neg < pos 2. pos-pos = neg 3. neg - neg = neg
+	// compare unsigned integer simply by "<"
+	assign src1_lt_src2 = ((aluop_in == `SLT_OP))?  
+                         ((src1_data_in[31] && !src2_data_in[31]) ||   
+                         (!src1_data_in[31] && !src2_data_in[31] && result_sum[31])||  
+                               (src1_data_in[31] && src2_data_in[31] && result_sum[31]))  
+                         :(src1_data_in < src2_data_in);
+
+    assign src1_in_not = ~src1_data_in;
+
+    // alu operations ARITHMETIC
+    always @( * ) begin
+    	if (rst == `RstEnable) begin
+    		arithmeticres <= `ZeroWord;
+    	end else begin
+    		case (aluop_in)
+	    		`SLT_OP, `SLTU_OP: begin
+	    			arithmeticres <= src1_lt_src2;
+	    		end
+	    		`ADD_OP, `ADDU_OP, `ADDI_OP, `ADDIU_OP: begin
+	    			arithmeticres <= result_sum;
+	    		end
+	    		`SUB_OP, `SUBU_OP: begin
+	    			arithmeticres <= result_sum;
+	    		end
+	    		`CLZ_OP: begin
+					arithmeticres <=  src1_data_in[31] ? 0  : src1_data_in[30] ? 1 :  
+			                    	  src1_data_in[29] ? 2  : src1_data_in[28] ? 3 :  
+			                    	  src1_data_in[27] ? 4  : src1_data_in[26] ? 5 :  
+			                    	  src1_data_in[25] ? 6  : src1_data_in[24] ? 7 :  
+			                    	  src1_data_in[23] ? 8  : src1_data_in[22] ? 9 :  
+			                    	  src1_data_in[21] ? 10 : src1_data_in[20] ? 11 :  
+			                    	  src1_data_in[19] ? 12 : src1_data_in[18] ? 13 :  
+			                    	  src1_data_in[17] ? 14 : src1_data_in[16] ? 15 :  
+			                    	  src1_data_in[15] ? 16 : src1_data_in[14] ? 17 :  
+			                    	  src1_data_in[13] ? 18 : src1_data_in[12] ? 19 :  
+			                    	  src1_data_in[11] ? 20 : src1_data_in[10] ? 21 :  
+			                    	  src1_data_in[9]  ? 22 : src1_data_in[8]  ? 23 :  
+			                    	  src1_data_in[7]  ? 24 : src1_data_in[6]  ? 25 :  
+			                    	  src1_data_in[5]  ? 26 : src1_data_in[4]  ? 27 :  
+			                    	  src1_data_in[3]  ? 28 : src1_data_in[2]  ? 29 :  
+			                    	  src1_data_in[1]  ? 30 : src1_data_in[0]  ? 31 : 32 ;
+	    		end
+	    		`CLO_OP: begin
+					arithmeticres <=  src1_in_not[31] ? 0  : src1_in_not[30] ? 1 :  
+			                    	  src1_in_not[29] ? 2  : src1_in_not[28] ? 3 :  
+			                    	  src1_in_not[27] ? 4  : src1_in_not[26] ? 5 :  
+			                    	  src1_in_not[25] ? 6  : src1_in_not[24] ? 7 :  
+			                    	  src1_in_not[23] ? 8  : src1_in_not[22] ? 9 :  
+			                    	  src1_in_not[21] ? 10 : src1_in_not[20] ? 11 :  
+			                    	  src1_in_not[19] ? 12 : src1_in_not[18] ? 13 :  
+			                    	  src1_in_not[17] ? 14 : src1_in_not[16] ? 15 :  
+			                    	  src1_in_not[15] ? 16 : src1_in_not[14] ? 17 :  
+			                    	  src1_in_not[13] ? 18 : src1_in_not[12] ? 19 :  
+			                    	  src1_in_not[11] ? 20 : src1_in_not[10] ? 21 :  
+			                    	  src1_in_not[9]  ? 22 : src1_in_not[8]  ? 23 :  
+			                    	  src1_in_not[7]  ? 24 : src1_in_not[6]  ? 25 :  
+			                    	  src1_in_not[5]  ? 26 : src1_in_not[4]  ? 27 :  
+			                    	  src1_in_not[3]  ? 28 : src1_in_not[2]  ? 29 :  
+			                    	  src1_in_not[1]  ? 30 : src1_in_not[0]  ? 31 : 32 ;
+	    		end
+	    		default: begin
+	    			arithmeticres <= `ZeroWord;
+	    		end
+	    	endcase
+    	end
+    end
+
+    // multiplication
+    // (~src1) + 1 if src < 0
+    assign opdata1_mult = (((aluop_in==`MUL_OP)||(aluop_in==`MULT_OP)) 
+    					&& (src1_data_in[31] == 1'b1)) ? (~src1_data_in + 1) : src1_data_in;
+    // (~src2) + 1 if src < 0
+    assign opdata2_mult = (((aluop_in==`MUL_OP)||(aluop_in==`MULT_OP)) 
+    					&& (src2_data_in[31] == 1'b1)) ? (~src2_data_in + 1) : src2_data_in;
+    // store the temporary result into hilo_temp
+    assign hilo_temp = opdata1_mult * opdata2_mult;
+    // fix the result:
+    // MULT, MUL: src1 ^ src2 == 1 => complement; otherwise, hilo_temp;
+    // MULTU: the unsigned result in hilo_temp.
+    always @( * ) begin
+    	if (rst == `RstEnable) begin
+    		mulres <= {`ZeroWord, `ZeroWord};
+    	end else if ((aluop_in == `MULT_OP) || (aluop_in == `MUL_OP)) begin
+    		if (src1_data_in[31] ^ src2_data_in[31] == 1'b1) begin
+    			mulres <= ~hilo_temp + 1;
+    		end else begin
+    			mulres <= hilo_temp;
+    		end 
+    	end else begin
+    		mulres <= hilo_temp;
+    	end
+    end
+
 	// select a result
 	always @( * ) begin
 		dest_addr_out <= dest_addr_in;
-		wreg_out <= wreg_in;
+		if ((aluop_in == `ADD_OP 
+			|| aluop_in == `ADDI_OP
+			|| aluop_in == `SUB_OP) 
+			&& ov_sum == `True) begin
+			wreg_out <= `False;
+		end else begin
+			wreg_out <= wreg_in;		
+		end
 		case (alusel_in)
 			`RES_LOGIC: begin
 				dest_data_out <= logicres;
@@ -138,6 +268,12 @@ module execute (
 			end
 			`RES_MOVE: begin
 				dest_data_out <= moveres;
+			end
+			`RES_ARITHMETIC: begin
+				dest_data_out <= arithmeticres;
+			end
+			`RES_MUL: begin
+				dest_data_out <= mulres;
 			end
 			default: begin
 				dest_data_out <= `ZeroWord;
@@ -151,6 +287,11 @@ module execute (
 			whilo_out <= `False;
 			hi_out    <= `ZeroWord;
 			lo_out    <= `ZeroWord;
+		end else if (aluop_in == `MULT_OP 
+			|| aluop_in == `MULTU_OP) begin
+			whilo_out <= `True;
+			hi_out    <= mulres[63:32];	
+			lo_out    <= mulres[31:0];
 		end else if (aluop_in == `MTHI_OP) begin
 			whilo_out <= `True;
 			hi_out    <= src1_data_in;

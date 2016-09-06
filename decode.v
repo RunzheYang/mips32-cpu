@@ -193,6 +193,68 @@ module decode (
                                     src2_read_out <= `False;
                                     inst_valid    <= `InstValid;
                                 end
+                                `SLT: begin
+                                    wreg_out      <= `True;
+                                    aluop_out     <= `SLT_OP;
+                                    alusel_out    <= `RES_ARITHMETIC;
+                                    src1_read_out <= `True;
+                                    src2_read_out <= `True;
+                                    inst_valid    <= `InstValid;
+                                end
+                                `SLTU: begin
+                                    wreg_out      <= `True;
+                                    aluop_out     <= `SLTU_OP;
+                                    alusel_out    <= `RES_ARITHMETIC;
+                                    src1_read_out <= `True;
+                                    src2_read_out <= `True;
+                                    inst_valid    <= `InstValid;
+                                end
+                                `ADD: begin
+                                    wreg_out      <= `True;
+                                    aluop_out     <= `ADD_OP;
+                                    alusel_out    <= `RES_ARITHMETIC;
+                                    src1_read_out <= `True;
+                                    src2_read_out <= `True;
+                                    inst_valid    <= `InstValid;
+                                end
+                                `ADDU: begin
+                                    wreg_out      <= `True;
+                                    aluop_out     <= `ADDU_OP;
+                                    alusel_out    <= `RES_ARITHMETIC;
+                                    src1_read_out <= `True;
+                                    src2_read_out <= `True;
+                                    inst_valid    <= `InstValid;
+                                end
+                                `SUB: begin
+                                    wreg_out      <= `True;
+                                    aluop_out     <= `SUB_OP;
+                                    alusel_out    <= `RES_ARITHMETIC;
+                                    src1_read_out <= `True;
+                                    src2_read_out <= `True;
+                                    inst_valid    <= `InstValid;
+                                end
+                                `SUBU: begin
+                                    wreg_out      <= `True;
+                                    aluop_out     <= `SUBU_OP;
+                                    alusel_out    <= `RES_ARITHMETIC;
+                                    src1_read_out <= `True;
+                                    src2_read_out <= `True;
+                                    inst_valid    <= `InstValid;
+                                end
+                                `MULT: begin
+                                    wreg_out      <= `False;
+                                    aluop_out     <= `MULT_OP;
+                                    src1_read_out <= `True;
+                                    src2_read_out <= `True;
+                                    inst_valid    <= `InstValid;
+                                end
+                                `MULTU: begin
+                                    wreg_out      <= `False;
+                                    aluop_out     <= `MULTU_OP;
+                                    src1_read_out <= `True;
+                                    src2_read_out <= `True;
+                                    inst_valid    <= `InstValid;
+                                end
                                 default: begin 
                                 end
                             endcase
@@ -250,6 +312,80 @@ module decode (
                     src1_read_out <= `False;
                     src2_read_out <= `False;
                     inst_valid    <= `InstValid;
+                end
+                `SLTI:  begin
+                    wreg_out      <= `True;
+                    aluop_out     <= `SLT_OP;
+                    alusel_out    <= `RES_ARITHMETIC;
+                    src1_read_out <= `True;
+                    src2_read_out <= `False;
+                    // sign extend
+                    imm           <= {{16{inst_in[15]}}, inst_in[15:0]};
+                    dest_addr_out <= inst_in[20:16];
+                    inst_valid    <= `InstValid;
+                end
+                `SLTIU:  begin
+                    wreg_out      <= `True;
+                    aluop_out     <= `SLTU_OP;
+                    alusel_out    <= `RES_ARITHMETIC;
+                    src1_read_out <= `True;
+                    src2_read_out <= `False;
+                    // sign extend
+                    imm           <= {{16{inst_in[15]}}, inst_in[15:0]};
+                    dest_addr_out <= inst_in[20:16];
+                    inst_valid    <= `InstValid;
+                end
+                `ADDI:  begin
+                    wreg_out      <= `True;
+                    aluop_out     <= `ADDI_OP;
+                    alusel_out    <= `RES_ARITHMETIC;
+                    src1_read_out <= `True;
+                    src2_read_out <= `False;
+                    // sign extend
+                    imm           <= {{16{inst_in[15]}}, inst_in[15:0]};
+                    dest_addr_out <= inst_in[20:16];
+                    inst_valid    <= `InstValid;
+                end
+                `ADDIU:  begin
+                    wreg_out      <= `True;
+                    aluop_out     <= `ADDIU_OP;
+                    alusel_out    <= `RES_ARITHMETIC;
+                    src1_read_out <= `True;
+                    src2_read_out <= `False;
+                    // sign extend
+                    imm           <= {{16{inst_in[15]}}, inst_in[15:0]};
+                    dest_addr_out <= inst_in[20:16];
+                    inst_valid    <= `InstValid;
+                end
+                `SPECIAL2:  begin
+                    case (op3)
+                        `CLZ: begin
+                            wreg_out <= `True;
+                            aluop_out <= `CLZ_OP;
+                            alusel_out <= `RES_ARITHMETIC;
+                            src1_read_out <= `True;
+                            src2_read_out <= `False;
+                            inst_valid <= `InstValid;
+                        end
+                        `CLO: begin
+                            wreg_out <= `True;
+                            aluop_out <= `CLO_OP;
+                            alusel_out <= `RES_ARITHMETIC;
+                            src1_read_out <= `True;
+                            src2_read_out <= `False;
+                            inst_valid <= `InstValid; 
+                        end
+                        `MUL: begin
+                            wreg_out <= `True;
+                            aluop_out <= `MUL_OP;
+                            alusel_out <= `RES_MUL;
+                            src1_read_out <= `True;
+                            src2_read_out <= `True;
+                            inst_valid <= `InstValid;
+                        end
+                        default: begin
+                        end
+                    endcase
                 end
                 default: begin
                 end
