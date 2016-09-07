@@ -23,6 +23,9 @@ module execute (
 		input wire[`DoubleRegBus]   hilo_temp_in,
         input wire[1:0]             cnt_in,
 
+        input wire[`DoubleRegBus]	div_result_in,
+        input wire 					div_ready_in,
+
 		output reg[`RegBus]		hi_out,
 		output reg[`RegBus]		lo_out,
 		output reg 				whilo_out,
@@ -33,6 +36,11 @@ module execute (
 
         output reg[`DoubleRegBus]   hilo_temp_out,
         output reg[1:0]             cnt_out,
+
+        output reg[`RegBus]		div_opdata1_out,
+        output reg[`RegBus]		div_opdata2_out,
+        output reg 				div_start_out,
+        output reg 				signed_div_out,
 
 		output reg 	stall_req
 
@@ -62,6 +70,8 @@ module execute (
 	reg[`DoubleRegBus] 	hilo_temp1;
 	reg[`DoubleRegBus]	mulres;
     reg                 stall_req_madd_msub;
+
+   	reg 				stall_req_div;
 	
 
 	// alu operations LOGIC
@@ -307,9 +317,71 @@ module execute (
     	end
     end
 
+    always @( * ) begin  
+    	if(rst == `RstEnable) begin  
+			stall_req_div <= `NoStop;  
+			div_opdata1_out    <= `ZeroWord;  
+			div_opdata2_out    <= `ZeroWord;  
+			div_start_out      <= `DivStop;  
+			signed_div_out     <= 1'b0;  
+     	end else begin  
+			stall_req_div <= `NoStop;  
+			div_opdata1_out    <= `ZeroWord;  
+			div_opdata2_out    <= `ZeroWord;  
+			div_start_out      <= `DivStop;  
+	    	signed_div_out     <= 1'b0;   
+       		case (aluop_in)   
+				`DIV_OP: begin
+					if(div_ready_in == `DivResultNotReady) begin  
+						div_opdata1_out <= src1_data_in;
+						div_opdata2_out <= src2_data_in;
+						div_start_out   <= `DivStart;
+						signed_div_out  <= 1'b1;
+						stall_req_div   <= `Stop;
+					end else if(div_ready_in == `DivResultReady) begin  
+						div_opdata1_out <= src1_data_in;
+						div_opdata2_out <= src2_data_in;
+						div_start_out   <= `DivStop;
+						signed_div_out  <= 1'b1;
+						stall_req_div   <= `NoStop;
+					end else begin
+						div_opdata1_out <= `ZeroWord;  
+						div_opdata2_out <= `ZeroWord;  
+						div_start_out   <= `DivStop;  
+						signed_div_out  <= 1'b0;  
+						stall_req_div   <= `NoStop;
+					end                     
+				end  
+				`DIVU_OP: begin
+					if(div_ready_in == `DivResultNotReady) begin  
+						div_opdata1_out <= src1_data_in;
+						div_opdata2_out <= src2_data_in; 
+						div_start_out   <= `DivStart;
+						signed_div_out  <= 1'b0;
+						stall_req_div   <= `Stop;
+					end else if(div_ready_in == `DivResultReady) begin
+						div_opdata1_out <= src1_data_in;
+						div_opdata2_out <= src2_data_in;
+						div_start_out   <= `DivStop;
+						signed_div_out  <= 1'b0;
+						stall_req_div   <= `NoStop;
+					end else begin
+						div_opdata1_out <= `ZeroWord;
+						div_opdata2_out <= `ZeroWord;
+						div_start_out   <= `DivStop;
+						signed_div_out  <= 1'b0;
+						stall_req_div   <= `NoStop;
+					end
+				end
+				default: begin
+				end
+    		endcase
+		end
+	end
+
     // stall_req
     always @( * ) begin
-    	stall_req = stall_req_madd_msub;
+    	stall_req = stall_req_madd_msub || stall_req_div;
     end
 
 	// select a result
@@ -351,6 +423,11 @@ module execute (
 			whilo_out <= `False;
 			hi_out    <= `ZeroWord;
 			lo_out    <= `ZeroWord;
+		end else if (aluop_in == `DIV_OP 
+			|| aluop_in == `DIVU_OP) begin
+			whilo_out <= `True;
+			hi_out    <= div_result_in[63:32];	
+			lo_out    <= div_result_in[31:0];
 		end else if (aluop_in == `MSUB_OP 
 			|| aluop_in == `MSUBU_OP) begin
 			whilo_out <= `True;

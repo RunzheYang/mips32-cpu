@@ -38,6 +38,9 @@
 	`define MULT 	6'b011000
 	`define MULTU	6'b011001
 
+	`define DIV 	6'b011010
+	`define DIVU 	6'b011011
+
 `define ANDI		6'b001100
 `define	ORI			6'b001101
 `define XORI		6'b001110
@@ -84,6 +87,8 @@
 
 `define MULT_OP 	8'b00011000
 `define MULTU_OP	8'b00011001
+`define DIV_OP 		8'b00011010
+`define DIVU_OP		8'b00011011
 
 `define ADDI_OP		8'b00001000
 `define ADDIU_OP	8'b00001001
@@ -146,3 +151,15 @@
 `define RegNum  			32			//通用寄存器的数量  
 `define RegNumLog2 			5			//寻址通用寄存器使用的地址位数  
 `define NOPRegAddr 			5'b00000  
+
+/**
+ * Division Constant
+ */
+`define DivFree          	2'b00  
+`define DivByZero        	2'b01  
+`define DivOn            	2'b10  
+`define DivEnd           	2'b11  
+`define DivResultReady   	1'b1  
+`define DivResultNotReady	1'b0  
+`define DivStart         	1'b1  
+`define DivStop          	1'b0  

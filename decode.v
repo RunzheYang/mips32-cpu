@@ -258,6 +258,20 @@ module decode (
                                     src2_read_out <= `True;
                                     inst_valid    <= `InstValid;
                                 end
+                                `DIV: begin
+                                    wreg_out      <= `False;
+                                    aluop_out     <= `DIV_OP;
+                                    src1_read_out <= `True;
+                                    src2_read_out <= `True;
+                                    inst_valid    <= `InstValid;
+                                end
+                                `DIVU: begin
+                                    wreg_out      <= `False;
+                                    aluop_out     <= `DIVU_OP;
+                                    src1_read_out <= `True;
+                                    src2_read_out <= `True;
+                                    inst_valid    <= `InstValid;
+                                end
                                 default: begin 
                                 end
                             endcase

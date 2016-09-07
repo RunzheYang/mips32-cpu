@@ -90,6 +90,16 @@ module cpu (
 	wire		stall_req_ex;
 	wire[5:0]	stall;
 
+	//div
+	wire				signed_div;
+	wire				div_start;
+	wire[`RegBus]		div_opdata1;
+	wire[`RegBus]		div_opdata2;
+	wire[`DoubleRegBus]	div_result;
+	wire				div_ready;
+
+ 
+
 	//CTRL
 	ctrl ctrl0 (
 			.rst			(rst),
@@ -227,6 +237,9 @@ module cpu (
 			.mem_lo_in		(mem_lo_out),
 			.mem_whilo_in	(mem_whilo_out),
 
+			.div_result_in	(div_result),
+			.div_ready_in	(div_ready),
+
 			.dest_addr_out	(ex_dest_addr_out),
 			.wreg_out		(ex_wreg_out),
 			.dest_data_out	(ex_dest_data_out),
@@ -237,6 +250,11 @@ module cpu (
 
 			.hilo_temp_out	(hilo_temp_out),
 			.cnt_out 		(cnt_out),
+
+			.div_opdata1_out	(div_opdata1),
+			.div_opdata2_out	(div_opdata2),
+			.div_start_out		(div_start),
+			.signed_div_out		(signed_div),
 
 			.stall_req 	(stall_req_ex)
 		);
@@ -314,6 +332,20 @@ module cpu (
 			.wb_hi 		(wb_hi_in),
 			.wb_lo 		(wb_lo_in),
 			.wb_whilo 	(wb_whilo_in)
+		);
+
+	div div0 (
+			.clk(clk),
+			.rst(rst),
+
+			.signed_div_in	(signed_div),
+			.opdata1_in (div_opdata1),
+			.opdata2_in (div_opdata2),
+			.start_in	(div_start),
+			.annul_in 	(1'b0),
+
+			.result_out (div_result),
+			.ready_out 	(div_ready)
 		);
 
 endmodule
