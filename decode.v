@@ -17,7 +17,6 @@ module decode (
         input wire[`RegBus]     mem_dest_data_in,
         input wire              mem_wreg_in,
 
-
         output reg                src1_read_out,
         output reg                src2_read_out,
         output reg[`RegAddrBus]   src1_addr_out,
@@ -28,10 +27,12 @@ module decode (
         output reg[`RegBus]       src1_data_out,
         output reg[`RegBus]       src2_data_out,
         output reg[`RegAddrBus]   dest_addr_out,
-        output reg                wreg_out
+        output reg                wreg_out,
+
+        output reg stall_req
 
     );
-    
+
     // opnum
     wire[5:0] op  = inst_in[31:26];
     wire[5:0] op2 = inst_in[10:6];
@@ -57,6 +58,7 @@ module decode (
             src1_addr_out <= `NOPRegAddr;
             src2_addr_out <= `NOPRegAddr;
             imm           <= `ZeroWord;
+            stall_req     <= `NoStop;
         end else begin
             aluop_out     <= `NOP_OP;
             alusel_out    <= `RES_NOP;
@@ -68,6 +70,7 @@ module decode (
             src1_addr_out <= inst_in[25:21];
             src2_addr_out <= inst_in[20:16];
             imm           <= `ZeroWord;
+            stall_req     <= `NoStop;
             case (op)
                 `SPECIAL: begin
                     case (op2)
@@ -378,6 +381,38 @@ module decode (
                         `MUL: begin
                             wreg_out <= `True;
                             aluop_out <= `MUL_OP;
+                            alusel_out <= `RES_MUL;
+                            src1_read_out <= `True;
+                            src2_read_out <= `True;
+                            inst_valid <= `InstValid;
+                        end
+                        `MADD: begin
+                            wreg_out <= `False;
+                            aluop_out <= `MADD_OP;
+                            alusel_out <= `RES_MUL;
+                            src1_read_out <= `True;
+                            src2_read_out <= `True;
+                            inst_valid <= `InstValid;
+                        end
+                        `MADDU: begin
+                            wreg_out <= `False;
+                            aluop_out <= `MADDU_OP;
+                            alusel_out <= `RES_MUL;
+                            src1_read_out <= `True;
+                            src2_read_out <= `True;
+                            inst_valid <= `InstValid;
+                        end
+                        `MSUB: begin
+                            wreg_out <= `False;
+                            aluop_out <= `MSUB_OP;
+                            alusel_out <= `RES_MUL;
+                            src1_read_out <= `True;
+                            src2_read_out <= `True;
+                            inst_valid <= `InstValid;
+                        end
+                        `MSUBU: begin
+                            wreg_out <= `False;
+                            aluop_out <= `MSUBU_OP;
                             alusel_out <= `RES_MUL;
                             src1_read_out <= `True;
                             src2_read_out <= `True;

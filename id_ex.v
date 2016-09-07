@@ -10,6 +10,8 @@ module id_ex (
 		input wire[`RegAddrBus]	id_dest_addr,
 		input wire				id_wreg,
 
+		input wire[5:0]			stall,
+
 		output reg[`AluOpBus]	ex_aluop,
 		output reg[`AluSelBus]	ex_alusel,
 		output reg[`RegBus]		ex_src1_data,
@@ -27,7 +29,14 @@ module id_ex (
 			ex_src2_data <= `ZeroWord;
 			ex_dest_addr <= `NOPRegAddr;
 			ex_wreg      <= `False;
-		end else begin
+		end else if (stall[2] == `Stop && stall[3] == `NoStop) begin
+			ex_aluop     <= `NOP_OP;
+			ex_alusel    <= `RES_NOP;
+			ex_src1_data <= `ZeroWord;
+			ex_src2_data <= `ZeroWord;
+			ex_dest_addr <= `NOPRegAddr;
+			ex_wreg      <= `False;	
+		end else if (stall[2] == `NoStop) begin
 			ex_aluop     <= id_aluop;
 			ex_alusel    <= id_alusel;
 			ex_src1_data <= id_src1_data;

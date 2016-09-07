@@ -54,6 +54,10 @@
 	`define CLZ		6'b100000
 	`define CLO		6'b100001
 	`define MUL 	6'b000010
+	`define MADD	6'b000000
+	`define MADDU	6'b000001
+	`define MSUB	6'b000100
+	`define MSUBU	6'b000101
 
 //ALU operaiton type
 `define AND_OP		8'b00100100
@@ -87,6 +91,10 @@
 `define CLZ_OP      8'b01100000
 `define CLO_OP      8'b01100001
 `define MUL_OP      8'b01100010
+`define MADD_OP		8'b01000000
+`define MADDU_OP	8'b01000001
+`define MSUB_OP		8'b01000100
+`define MSUBU_OP	8'b01000101
 
 `define NOP_OP		8'b00000000
 
@@ -117,6 +125,8 @@
 `define AluSelBus		2:0
 `define InstValid		1'b0
 `define InstInvalid		1'b1
+`define Stop 			1'b1
+`define NoStop 			1'b0
 
 /**
  * ROM Constants

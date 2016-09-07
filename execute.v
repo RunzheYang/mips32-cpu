@@ -20,13 +20,21 @@ module execute (
 		input wire[`RegBus]		mem_lo_in,
 		input wire 				mem_whilo_in,
 
+		input wire[`DoubleRegBus]   hilo_temp_in,
+        input wire[1:0]             cnt_in,
+
 		output reg[`RegBus]		hi_out,
 		output reg[`RegBus]		lo_out,
 		output reg 				whilo_out,
 
 		output reg[`RegAddrBus]	dest_addr_out,
 		output reg 				wreg_out,
-		output reg[`RegBus]		dest_data_out
+		output reg[`RegBus]		dest_data_out,
+
+        output reg[`DoubleRegBus]   hilo_temp_out,
+        output reg[1:0]             cnt_out,
+
+		output reg 	stall_req
 
 	);
 	
@@ -51,7 +59,9 @@ module execute (
 	wire[`RegBus]	opdata1_mult; // a * b, a
 	wire[`RegBus]	opdata2_mult; // a * b, b
 	wire[`DoubleRegBus]	hilo_temp; // 64-bit temp result
+	reg[`DoubleRegBus] 	hilo_temp1;
 	reg[`DoubleRegBus]	mulres;
+    reg                 stall_req_madd_msub;
 	
 
 	// alu operations LOGIC
@@ -224,20 +234,27 @@ module execute (
 
     // multiplication
     // (~src1) + 1 if src < 0
-    assign opdata1_mult = (((aluop_in==`MUL_OP)||(aluop_in==`MULT_OP)) 
+    assign opdata1_mult = ((aluop_in ==`MUL_OP
+    					|| aluop_in ==`MULT_OP
+    					|| aluop_in ==`MADD_OP
+    					|| aluop_in ==`MSUB_OP) 
     					&& (src1_data_in[31] == 1'b1)) ? (~src1_data_in + 1) : src1_data_in;
     // (~src2) + 1 if src < 0
-    assign opdata2_mult = (((aluop_in==`MUL_OP)||(aluop_in==`MULT_OP)) 
+    assign opdata2_mult = ((aluop_in ==`MUL_OP
+    					|| aluop_in ==`MULT_OP
+    					|| aluop_in ==`MADD_OP
+    					|| aluop_in ==`MSUB_OP)  
     					&& (src2_data_in[31] == 1'b1)) ? (~src2_data_in + 1) : src2_data_in;
     // store the temporary result into hilo_temp
     assign hilo_temp = opdata1_mult * opdata2_mult;
     // fix the result:
-    // MULT, MUL: src1 ^ src2 == 1 => complement; otherwise, hilo_temp;
+    // MULT, MUL, MADD, MSUB: src1 ^ src2 == 1 => complement; otherwise, hilo_temp;
     // MULTU: the unsigned result in hilo_temp.
     always @( * ) begin
     	if (rst == `RstEnable) begin
     		mulres <= {`ZeroWord, `ZeroWord};
-    	end else if ((aluop_in == `MULT_OP) || (aluop_in == `MUL_OP)) begin
+    	end else if (aluop_in == `MULT_OP || aluop_in == `MUL_OP ||
+    				aluop_in == `MADD_OP || aluop_in == `MSUB_OP) begin
     		if (src1_data_in[31] ^ src2_data_in[31] == 1'b1) begin
     			mulres <= ~hilo_temp + 1;
     		end else begin
@@ -246,6 +263,53 @@ module execute (
     	end else begin
     		mulres <= hilo_temp;
     	end
+    end
+
+    // MADD, MADDU, MSUB, MSUBU
+    always @( * ) begin
+    	if (rst == `RstEnable) begin
+    		hilo_temp_out <= {`ZeroWord, `ZeroWord};
+    		cnt_out <= 2'b00;
+    		stall_req_madd_msub <= `NoStop;
+    	end else begin
+    		case (aluop_in)
+    			`MADD_OP, `MADDU_OP: begin
+    				if (cnt_in == 2'b00) begin
+						hilo_temp_out       <= mulres;
+						cnt_out             <= 2'b01;
+						hilo_temp1          <= {`ZeroWord, `ZeroWord};
+						stall_req_madd_msub <= `Stop;
+    				end else if (cnt_in == 2'b01) begin
+						hilo_temp_out       <= {`ZeroWord, `ZeroWord};
+						cnt_out             <= 2'b10;
+						hilo_temp1          <= hilo_temp_in + {HI, LO};
+						stall_req_madd_msub <= `NoStop;
+    				end
+    			end
+    			`MSUB_OP, `MSUBU_OP: begin
+    				if (cnt_in == 2'b00) begin
+						hilo_temp_out       <= ~mulres + 1;
+						cnt_out             <= 2'b01;
+						stall_req_madd_msub <= `Stop;
+    				end else if (cnt_in == 2'b01) begin
+						hilo_temp_out       <= {`ZeroWord, `ZeroWord};
+						cnt_out             <= 2'b10;
+						hilo_temp1          <= hilo_temp_in + {HI, LO};
+						stall_req_madd_msub <= `NoStop;
+    				end
+    			end
+    			default: begin
+    				hilo_temp_out <= {`ZeroWord, `ZeroWord};
+    				cnt_out <= 2'b00;
+    				stall_req_madd_msub <= `NoStop;
+    			end
+    		endcase
+    	end
+    end
+
+    // stall_req
+    always @( * ) begin
+    	stall_req = stall_req_madd_msub;
     end
 
 	// select a result
@@ -281,12 +345,22 @@ module execute (
 		endcase
 	end
 
-	// MTHI, MTLO
+	// MTHI, MTLO and other operations change HILO
 	always @( * ) begin
 		if (rst == `RstEnable) begin
 			whilo_out <= `False;
 			hi_out    <= `ZeroWord;
 			lo_out    <= `ZeroWord;
+		end else if (aluop_in == `MSUB_OP 
+			|| aluop_in == `MSUBU_OP) begin
+			whilo_out <= `True;
+			hi_out    <= hilo_temp1[63:32];	
+			lo_out    <= hilo_temp1[31:0];
+		end else if (aluop_in == `MADD_OP 
+			|| aluop_in == `MADDU_OP) begin
+			whilo_out <= `True;
+			hi_out    <= hilo_temp1[63:32];	
+			lo_out    <= hilo_temp1[31:0];
 		end else if (aluop_in == `MULT_OP 
 			|| aluop_in == `MULTU_OP) begin
 			whilo_out <= `True;

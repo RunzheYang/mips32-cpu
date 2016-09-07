@@ -31,6 +31,8 @@ module cpu (
 	wire[`RegBus]		ex_src2_data_in;
 	wire				ex_wreg_in;
 	wire[`RegAddrBus]	ex_dest_addr_in;
+	wire[`DoubleRegBus]	hilo_temp_in;
+	wire[1:0] 			cnt_in;
 
 	// EXE ->
 	wire				ex_wreg_out;
@@ -40,6 +42,9 @@ module cpu (
 	wire[`RegBus]		ex_hi_out;
 	wire[`RegBus]		ex_lo_out;
 	wire				ex_whilo_out;
+
+	wire[`DoubleRegBus]	hilo_temp_out;
+	wire[1:0] 			cnt_out;
 
 	// -> MEM
 	wire				mem_wreg_in;
@@ -80,11 +85,24 @@ module cpu (
 	wire[`RegBus]		hi_data;
 	wire[`RegBus]		lo_data;
 
+	//ctrl
+	wire		stall_req_id;
+	wire		stall_req_ex;
+	wire[5:0]	stall;
+
+	//CTRL
+	ctrl ctrl0 (
+			.rst			(rst),
+			.stall_req_id	(stall_req_id),
+			.stall_req_ex	(stall_req_ex),
+			.stall 			(stall)
+		);
 
 	// pc_reg instantiation
 	pc_reg pc_reg0 (
 			.clk 	(clk),
 			.rst 	(rst),
+			.stall	(stall),
 			.pc 	(pc),
 			.ce 	(rom_ce_out)
 		);
@@ -97,6 +115,7 @@ module cpu (
 			.rst	(rst),
 			.if_pc	(pc),
 			.if_inst(rom_data_in),
+			.stall 	(stall),
 			.id_pc 	(id_pc_in),
 			.id_inst(id_inst_in)
 		);
@@ -128,7 +147,8 @@ module cpu (
 			.src1_data_out	(id_src1_data_out),
 			.src2_data_out	(id_src2_data_out),
 			.dest_addr_out	(id_dest_addr_out),
-			.wreg_out		(id_wreg_out)
+			.wreg_out		(id_wreg_out),
+			.stall_req 		(stall_req_id)
 		);
 
 	// regfile instantiation 
@@ -173,7 +193,7 @@ module cpu (
 			.id_src2_data	(id_src2_data_out),
 			.id_dest_addr	(id_dest_addr_out),
 			.id_wreg		(id_wreg_out),
-
+			.stall 			(stall),
 			.ex_aluop		(ex_aluop_in),
 			.ex_alusel		(ex_alusel_in),
 			.ex_src1_data	(ex_src1_data_in),
@@ -200,6 +220,9 @@ module cpu (
 			.wb_lo_in		(wb_lo_in),
 			.wb_whilo_in	(wb_whilo_in),
 
+			.hilo_temp_in	(hilo_temp_in),
+			.cnt_in			(cnt_in),
+
 			.mem_hi_in		(mem_hi_out),
 			.mem_lo_in		(mem_lo_out),
 			.mem_whilo_in	(mem_whilo_out),
@@ -210,7 +233,12 @@ module cpu (
 
 			.hi_out		(ex_hi_out),
 			.lo_out		(ex_lo_out),
-			.whilo_out	(ex_whilo_out)
+			.whilo_out	(ex_whilo_out),
+
+			.hilo_temp_out	(hilo_temp_out),
+			.cnt_out 		(cnt_out),
+
+			.stall_req 	(stall_req_ex)
 		);
 
 	// ex/mem instantiation
@@ -225,6 +253,14 @@ module cpu (
 			.ex_hi 			(ex_hi_out),
 			.ex_lo 			(ex_lo_out),
 			.ex_whilo		(ex_whilo_out),
+
+			.stall 			(stall),
+
+			.hilo_in 		(hilo_temp_out),
+			.cnt_in			(cnt_out),
+
+			.hilo_out 		(hilo_temp_in),
+			.cnt_out		(cnt_in),
 
 			.mem_dest_addr	(mem_dest_addr_in),
 			.mem_wreg		(mem_wreg_in),
@@ -268,6 +304,8 @@ module cpu (
 			.mem_hi 	(mem_hi_out),
 			.mem_lo 	(mem_lo_out),
 			.mem_whilo 	(mem_whilo_out),
+
+			.stall 		(stall),
 
 			.wb_dest_addr	(wb_dest_addr_in),
 			.wb_wreg		(wb_wreg_in),
