@@ -26,6 +26,9 @@ module execute (
         input wire[`DoubleRegBus]	div_result_in,
         input wire 					div_ready_in,
 
+        input wire[`RegBus]		link_addr_in,
+        input wire				in_delayslot_in,
+
 		output reg[`RegBus]		hi_out,
 		output reg[`RegBus]		lo_out,
 		output reg 				whilo_out,
@@ -410,6 +413,9 @@ module execute (
 			end
 			`RES_MUL: begin
 				dest_data_out <= mulres;
+			end
+			`RES_JUMP_BRANCH: begin
+				dest_data_out <= link_addr_in;
 			end
 			default: begin
 				dest_data_out <= `ZeroWord;

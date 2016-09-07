@@ -17,6 +17,15 @@ module decode (
         input wire[`RegBus]     mem_dest_data_in,
         input wire              mem_wreg_in,
 
+        input wire              in_delayslot_in,
+
+        output reg              next_inst_delayslot_out,
+
+        output reg              branch_flag_out,
+        output reg[`RegBus]     branch_tar_addr_out,
+        output reg[`RegBus]     link_addr_out,
+        output reg              in_delayslot_out,
+
         output reg                src1_read_out,
         output reg                src2_read_out,
         output reg[`RegAddrBus]   src1_addr_out,
@@ -45,6 +54,17 @@ module decode (
 
     reg inst_valid;
 
+    wire[`RegBus] pc_plus_4;
+    wire[`RegBus] pc_plus_8;
+
+    wire[`RegBus] imm_sll2;
+
+    assign pc_plus_4 = pc_in + 4;
+    assign pc_plus_8 = pc_in + 8;
+
+    // imm_sll2: offset << 2 then extend to 32 bits
+    assign imm_sll2 = {{14{inst_in[15]}}, inst_in[15:0], 2'b00};
+
     // translate instructions
     always @( * ) begin
         if (rst == `RstEnable) begin
@@ -59,6 +79,10 @@ module decode (
             src2_addr_out <= `NOPRegAddr;
             imm           <= `ZeroWord;
             stall_req     <= `NoStop;
+            link_addr_out <= `ZeroWord;
+            branch_tar_addr_out     <= `ZeroWord;
+            branch_flag_out         <= `NotBranch;
+            next_inst_delayslot_out <= `NotInDelaySlot;
         end else begin
             aluop_out     <= `NOP_OP;
             alusel_out    <= `RES_NOP;
@@ -71,6 +95,10 @@ module decode (
             src2_addr_out <= inst_in[20:16];
             imm           <= `ZeroWord;
             stall_req     <= `NoStop;
+            link_addr_out <= `ZeroWord;
+            branch_tar_addr_out     <= `ZeroWord;
+            branch_flag_out         <= `NotBranch;
+            next_inst_delayslot_out <= `NotInDelaySlot;
             case (op)
                 `SPECIAL: begin
                     case (op2)
@@ -272,6 +300,31 @@ module decode (
                                     src2_read_out <= `True;
                                     inst_valid    <= `InstValid;
                                 end
+                                `JR: begin
+                                    wreg_out      <= `False;
+                                    aluop_out     <= `JR_OP;
+                                    alusel_out    <= `RES_JUMP_BRANCH;
+                                    src1_read_out <= `True;
+                                    src2_read_out <= `False;
+                                    link_addr_out <= `ZeroWord;
+                                    branch_tar_addr_out <= src1_data_out;
+                                    branch_flag_out <= `Branch;
+                                    next_inst_delayslot_out <= `InDelaySlot;
+                                    inst_valid    <= `InstValid;
+                                end
+                                `JALR: begin
+                                    wreg_out      <= `True;
+                                    aluop_out     <= `JALR_OP;
+                                    alusel_out    <= `RES_JUMP_BRANCH;
+                                    src1_read_out <= `True;
+                                    src2_read_out <= `False;
+                                    dest_addr_out <= inst_in[15:11];
+                                    link_addr_out <= pc_plus_8;
+                                    branch_tar_addr_out <= src1_data_out;
+                                    branch_flag_out <= `Branch;
+                                    next_inst_delayslot_out <= `InDelaySlot;
+                                    inst_valid    <= `InstValid;
+                                end
                                 default: begin 
                                 end
                             endcase
@@ -374,6 +427,85 @@ module decode (
                     dest_addr_out <= inst_in[20:16];
                     inst_valid    <= `InstValid;
                 end
+                `J: begin
+                    wreg_out <= `False;
+                    aluop_out <= `J_OP;
+                    alusel_out <= `RES_JUMP_BRANCH;
+                    src1_read_out <= `False;
+                    src2_read_out <= `False;
+                    link_addr_out <= `ZeroWord;
+                    branch_flag_out <= `Branch;
+                    next_inst_delayslot_out <= `InDelaySlot;
+                    inst_valid <= `InstValid;
+                    branch_tar_addr_out <= 
+                        {pc_plus_4[31:28], inst_in[25:0], 2'b00};
+                end
+                `JAL: begin
+                    wreg_out <= `True;
+                    aluop_out <= `JAL_OP;
+                    alusel_out <= `RES_JUMP_BRANCH;
+                    src1_read_out <= `False;
+                    src2_read_out <= `False;
+                    link_addr_out <= pc_plus_8;
+                    dest_addr_out <= 5'b11111;
+                    branch_flag_out <= `Branch;
+                    next_inst_delayslot_out <= `InDelaySlot;
+                    inst_valid <= `InstValid;
+                    branch_tar_addr_out <= 
+                        {pc_plus_4[31:28], inst_in[25:0], 2'b00};
+                end
+                `BEQ: begin
+                    wreg_out <= `False;
+                    aluop_out <= `BEQ_OP;
+                    alusel_out <= `RES_JUMP_BRANCH;
+                    src1_read_out <= `True;
+                    src2_read_out <= `True;
+                    inst_valid <= `InstValid;
+                    if (src1_data_out == src2_data_out) begin
+                        branch_tar_addr_out <= pc_plus_4 + imm_sll2;
+                        branch_flag_out <= `Branch;
+                        next_inst_delayslot_out <= `InDelaySlot;
+                    end
+                end
+                `BGTZ: begin
+                    wreg_out <= `False;
+                    aluop_out <= `BGTZ_OP;
+                    alusel_out <= `RES_JUMP_BRANCH;
+                    src1_read_out <= `True;
+                    src2_read_out <= `False;
+                    inst_valid <= `InstValid;
+                    if (src1_data_out[31] == 1'b0 && src1_data_out != `ZeroWord) begin
+                        branch_tar_addr_out <= pc_plus_4 + imm_sll2;
+                        branch_flag_out <= `Branch;
+                        next_inst_delayslot_out <= `InDelaySlot;
+                    end
+                end
+                `BLEZ: begin
+                    wreg_out <= `False;
+                    aluop_out <= `BLEZ_OP;
+                    alusel_out <= `RES_JUMP_BRANCH;
+                    src1_read_out <= `True;
+                    src2_read_out <= `False;
+                    inst_valid <= `InstValid;
+                    if (src1_data_out[31] == 1'b1 || src1_data_out == `ZeroWord) begin
+                        branch_tar_addr_out <= pc_plus_4 + imm_sll2;
+                        branch_flag_out <= `Branch;
+                        next_inst_delayslot_out <= `InDelaySlot;
+                    end
+                end
+                `BNE: begin
+                    wreg_out <= `False;
+                    aluop_out <= `BNE_OP;
+                    alusel_out <= `RES_JUMP_BRANCH;
+                    src1_read_out <= `True;
+                    src2_read_out <= `True;
+                    inst_valid <= `InstValid;
+                    if (src1_data_out != src2_data_out) begin
+                        branch_tar_addr_out <= pc_plus_4 + imm_sll2;
+                        branch_flag_out <= `Branch;
+                        next_inst_delayslot_out <= `InDelaySlot;
+                    end
+                end
                 `SPECIAL2:  begin
                     case (op3)
                         `CLZ: begin
@@ -433,6 +565,66 @@ module decode (
                             inst_valid <= `InstValid;
                         end
                         default: begin
+                        end
+                    endcase
+                end
+                `REGIMM: begin
+                    case (op4)
+                        `BGEZ: begin
+                            wreg_out <= `False;
+                            aluop_out <= `BGEZ_OP;
+                            alusel_out <= `RES_JUMP_BRANCH;
+                            src1_read_out <= `True;
+                            src2_read_out <= `False;
+                            inst_valid <= `InstValid;
+                            if (src1_data_out[31] == 1'b0) begin
+                                branch_tar_addr_out <= pc_plus_4 + imm_sll2;
+                                branch_flag_out <= `Branch;
+                                next_inst_delayslot_out <= `InDelaySlot;
+                            end
+                        end
+                        `BGEZAL: begin
+                            wreg_out <= `True;
+                            aluop_out <= `BGEZAL_OP;
+                            alusel_out <= `RES_JUMP_BRANCH;
+                            src1_read_out <= `True;
+                            src2_read_out <= `False;
+                            link_addr_out <= pc_plus_8;
+                            dest_addr_out <= 5'b11111;
+                            inst_valid <= `InstValid;
+                            if (src1_data_out[31] == 1'b0) begin
+                                branch_tar_addr_out <= pc_plus_4 + imm_sll2;
+                                branch_flag_out <= `Branch;
+                                next_inst_delayslot_out <= `InDelaySlot;
+                            end
+                        end
+                        `BLTZ: begin
+                            wreg_out <= `False;
+                            aluop_out <= `BLTZ_OP;
+                            alusel_out <= `RES_JUMP_BRANCH;
+                            src1_read_out <= `True;
+                            src2_read_out <= `False;
+                            inst_valid <= `InstValid;
+                            if (src1_data_out[31] == 1'b1) begin
+                                branch_tar_addr_out <= pc_plus_4 + imm_sll2;
+                                branch_flag_out <= `Branch;
+                                next_inst_delayslot_out <= `InDelaySlot;
+                            end
+                        end
+                        `BLTZAL: begin
+                            wreg_out <= `True;
+                            aluop_out <= `BLTZAL_OP;
+                            alusel_out <= `RES_JUMP_BRANCH;
+                            src1_read_out <= `True;
+                            src2_read_out <= `False;
+                            link_addr_out <= pc_plus_8;
+                            dest_addr_out <= 5'b11111;
+                            inst_valid <= `InstValid;
+                            if (src1_data_out[31] == 1'b1) begin
+                                branch_tar_addr_out <= pc_plus_4 + imm_sll2;
+                                branch_flag_out <= `Branch;
+                                next_inst_delayslot_out <= `InDelaySlot;
+                            end
                         end
                     endcase
                 end
@@ -523,6 +715,14 @@ module decode (
             src2_data_out <= imm;
         end else begin
             src2_data_out <= `ZeroWord;
+        end
+    end
+
+    always @( * ) begin
+        if (rst == `RstEnable) begin
+            in_delayslot_out <= `NotInDelaySlot;
+        end else begin
+            in_delayslot_out <= in_delayslot_in;
         end
     end
 

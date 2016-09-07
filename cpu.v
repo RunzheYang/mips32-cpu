@@ -15,6 +15,7 @@ module cpu (
 	// -> ID	
 	wire[`InstAddrBus]	id_pc_in;
 	wire[`InstBus]		id_inst_in;
+	wire				in_delayslot;
 
 	// ID -> 
 	wire[`AluOpBus]		id_aluop_out;
@@ -23,6 +24,12 @@ module cpu (
 	wire[`RegBus]		id_src2_data_out;
 	wire				id_wreg_out;
 	wire[`RegAddrBus]	id_dest_addr_out;
+
+	wire 				id_in_delayslot_out;
+	wire[`RegBus]		id_link_addr_out;
+	wire 				id_nex_inst_delayslot_out;
+	wire[`RegBus]		id_branch_tar_addr_out;
+	wire				id_branch_flag_out;
 
 	// -> EXE
 	wire[`AluOpBus]		ex_aluop_in;
@@ -33,6 +40,8 @@ module cpu (
 	wire[`RegAddrBus]	ex_dest_addr_in;
 	wire[`DoubleRegBus]	hilo_temp_in;
 	wire[1:0] 			cnt_in;
+	wire[`RegBus]		ex_link_addr_in;
+	wire				ex_in_delayslot_in;
 
 	// EXE ->
 	wire				ex_wreg_out;
@@ -113,6 +122,8 @@ module cpu (
 			.clk 	(clk),
 			.rst 	(rst),
 			.stall	(stall),
+			.branch_flag_in		(id_branch_flag_out),
+			.branch_tar_addr_in (id_branch_tar_addr_out),
 			.pc 	(pc),
 			.ce 	(rom_ce_out)
 		);
@@ -146,6 +157,14 @@ module cpu (
 			.mem_dest_addr_in	(mem_dest_addr_out),
 			.mem_dest_data_in	(mem_dest_data_out),
 			.mem_wreg_in		(mem_wreg_out),
+
+			.in_delayslot_in   (in_delayslot),
+
+			.next_inst_delayslot_out	(id_nex_inst_delayslot_out),
+			.branch_flag_out			(id_branch_flag_out),
+			.branch_tar_addr_out		(id_branch_tar_addr_out),
+			.link_addr_out				(id_link_addr_out),
+			.in_delayslot_out			(id_in_delayslot_out),
 
 			.src1_read_out	(reg1_read),
 			.src2_read_out	(reg2_read),
@@ -204,6 +223,12 @@ module cpu (
 			.id_dest_addr	(id_dest_addr_out),
 			.id_wreg		(id_wreg_out),
 			.stall 			(stall),
+			.id_link_addr			(id_link_addr_out),
+			.id_in_delayslot		(id_in_delayslot_out),
+			.next_inst_delayslot_in	(id_nex_inst_delayslot_out),
+			.ex_link_addr			(ex_link_addr_in),
+			.ex_in_delayslot		(ex_in_delayslot_in),
+			.next_inst_delayslot_out	(in_delayslot),
 			.ex_aluop		(ex_aluop_in),
 			.ex_alusel		(ex_alusel_in),
 			.ex_src1_data	(ex_src1_data_in),
@@ -239,6 +264,9 @@ module cpu (
 
 			.div_result_in	(div_result),
 			.div_ready_in	(div_ready),
+
+			.link_addr_in	(ex_link_addr_in),
+			.in_delayslot_in	(ex_in_delayslot_in),
 
 			.dest_addr_out	(ex_dest_addr_out),
 			.wreg_out		(ex_wreg_out),

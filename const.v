@@ -41,6 +41,9 @@
 	`define DIV 	6'b011010
 	`define DIVU 	6'b011011
 
+	`define JR		6'b001000
+	`define JALR	6'b001001
+
 `define ANDI		6'b001100
 `define	ORI			6'b001101
 `define XORI		6'b001110
@@ -53,6 +56,14 @@
 `define SLTI		6'b001010
 `define SLTIU		6'b001011
 
+`define J			6'b000010
+`define JAL			6'b000011
+
+`define BEQ			6'b000100
+`define BGTZ		6'b000111
+`define BLEZ		6'b000110
+`define BNE			6'b000101
+
 `define SPECIAL2	6'b011100
 	`define CLZ		6'b100000
 	`define CLO		6'b100001
@@ -61,6 +72,12 @@
 	`define MADDU	6'b000001
 	`define MSUB	6'b000100
 	`define MSUBU	6'b000101
+
+`define REGIMM 		6'b000001
+	`define BLTZ    5'b00000
+	`define BLTZAL 	5'b10000
+	`define BGEZ 	5'b00001
+	`define BGEZAL 	5'b10001
 
 //ALU operaiton type
 `define AND_OP		8'b00100100
@@ -90,8 +107,11 @@
 `define DIV_OP 		8'b00011010
 `define DIVU_OP		8'b00011011
 
-`define ADDI_OP		8'b00001000
-`define ADDIU_OP	8'b00001001
+`define JR_OP 		8'b00001000
+`define JALR_OP		8'b00001001
+
+`define ADDI_OP		8'b10001000
+`define ADDIU_OP	8'b10001001
 
 `define CLZ_OP      8'b01100000
 `define CLO_OP      8'b01100001
@@ -101,6 +121,19 @@
 `define MSUB_OP		8'b01000100
 `define MSUBU_OP	8'b01000101
 
+`define J_OP		8'b10000010
+`define JAL_OP		8'b10000011
+
+`define BEQ_OP		8'b10000100
+`define BGTZ_OP		8'b10000111
+`define BLEZ_OP		8'b10000110
+`define BNE_OP		8'b10000101
+
+`define BLTZ_OP    	8'b11000000
+`define BLTZAL_OP 	8'b11010000
+`define BGEZ_OP 	8'b11000001
+`define BGEZAL_OP 	8'b11010001
+
 `define NOP_OP		8'b00000000
 
 //ALU selection
@@ -109,6 +142,7 @@
 `define RES_MOVE		3'b011
 `define RES_ARITHMETIC	3'b100
 `define RES_MUL			3'b101
+`define RES_JUMP_BRANCH	3'b110
 `define RES_NOP			3'b000
 
 
@@ -132,6 +166,10 @@
 `define InstInvalid		1'b1
 `define Stop 			1'b1
 `define NoStop 			1'b0
+`define Branch 			1'b1 
+`define NotBranch		1'b0
+`define InDelaySlot 	1'b1
+`define NotInDelaySlot	1'b0
 
 /**
  * ROM Constants
