@@ -29,6 +29,8 @@ module execute (
         input wire[`RegBus]		link_addr_in,
         input wire				in_delayslot_in,
 
+        input wire[`RegBus]		inst_in,
+
 		output reg[`RegBus]		hi_out,
 		output reg[`RegBus]		lo_out,
 		output reg 				whilo_out,
@@ -44,6 +46,10 @@ module execute (
         output reg[`RegBus]		div_opdata2_out,
         output reg 				div_start_out,
         output reg 				signed_div_out,
+
+        output wire[`AluOpBus]	aluop_out,
+        output wire[`RegBus]	mem_addr_out,
+        output wire[`RegBus]	src2_data_out,
 
 		output reg 	stall_req
 
@@ -75,7 +81,12 @@ module execute (
     reg                 stall_req_madd_msub;
 
    	reg 				stall_req_div;
-	
+
+   	assign aluop_out = aluop_in;
+
+   	assign mem_addr_out = src1_data_in + {{16{inst_in[15]}}, inst_in[15:0]};
+
+   	assign src2_data_out = src2_data_in;
 
 	// alu operations LOGIC
 	always @( * ) begin

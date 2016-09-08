@@ -16,6 +16,8 @@ module id_ex (
 		input wire				id_in_delayslot,
 		input wire 				next_inst_delayslot_in,
 
+		input wire[`RegBus]		id_inst,
+
 		output reg[`RegBus] 	ex_link_addr,
 		output reg 				ex_in_delayslot,
 		output reg 				next_inst_delayslot_out,
@@ -25,6 +27,9 @@ module id_ex (
 		output reg[`RegBus]		ex_src1_data,
 		output reg[`RegBus]		ex_src2_data,
 		output reg[`RegAddrBus]	ex_dest_addr,
+
+		output reg[`RegBus] 	ex_inst,
+
 		output reg 				ex_wreg
 
 	);
@@ -40,6 +45,7 @@ module id_ex (
 			ex_link_addr <= `ZeroWord;
 			ex_in_delayslot <= `NotInDelaySlot;
 			next_inst_delayslot_out <= `NotInDelaySlot;
+			ex_inst <= `ZeroWord;
 		end else if (stall[2] == `Stop && stall[3] == `NoStop) begin
 			ex_aluop     <= `NOP_OP;
 			ex_alusel    <= `RES_NOP;
@@ -49,6 +55,7 @@ module id_ex (
 			ex_wreg      <= `False;
 			ex_link_addr <= `ZeroWord;
 			ex_in_delayslot <= `NotInDelaySlot;
+			ex_inst <= `ZeroWord;
 		end else if (stall[2] == `NoStop) begin
 			ex_aluop     <= id_aluop;
 			ex_alusel    <= id_alusel;
@@ -59,6 +66,7 @@ module id_ex (
 			ex_link_addr <= id_link_addr;
 			ex_in_delayslot <= id_in_delayslot;
 			next_inst_delayslot_out <= next_inst_delayslot_in;
+			ex_inst <= id_inst;
 		end
 	end
 

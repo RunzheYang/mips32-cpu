@@ -79,6 +79,19 @@
 	`define BGEZ 	5'b00001
 	`define BGEZAL 	5'b10001
 
+`define LB 			6'b100000
+`define LBU			6'b100100
+`define LH 			6'b100001
+`define LHU			6'b100101
+`define LW 			6'b100011
+`define LWL			6'b100010
+`define LWR			6'b100110
+`define SB 			6'b101000
+`define SH 			6'b101001
+`define SW 			6'b101011
+`define SWL			6'b101010
+`define SWR			6'b101110
+
 //ALU operaiton type
 `define AND_OP		8'b00100100
 `define OR_OP		8'b00100101
@@ -134,15 +147,29 @@
 `define BGEZ_OP 	8'b11000001
 `define BGEZAL_OP 	8'b11010001
 
+`define LB_OP 		8'b10100000
+`define LBU_OP		8'b10100100
+`define LH_OP 		8'b10100001
+`define LHU_OP		8'b10100101
+`define LW_OP 		8'b10100011
+`define LWL_OP		8'b10100010
+`define LWR_OP		8'b10100110
+`define SB_OP 		8'b10101000
+`define SH_OP 		8'b10101001
+`define SW_OP 		8'b10101011
+`define SWL_OP		8'b10101010
+`define SWR_OP		8'b10101110
+
 `define NOP_OP		8'b00000000
 
-//ALU selection
+//ALU result selection
 `define RES_LOGIC		3'b001
 `define RES_SHIFT		3'b010
 `define RES_MOVE		3'b011
 `define RES_ARITHMETIC	3'b100
 `define RES_MUL			3'b101
 `define RES_JUMP_BRANCH	3'b110
+`define RES_LOAD_STORE	3'b111
 `define RES_NOP			3'b000
 
 
@@ -180,15 +207,25 @@
 `define InstMemNumLog2		10
 
 /**
+ * RAM Constants
+ */
+`define DataAddrBus 		31:0		// width of ROM Address Bus
+`define DataBus 			31:0 		// width of ROM data Bus
+`define DataMemNum 			1023		// size of ROM
+`define DataMemNumLog2		10
+`define ByteWidth			7:0
+
+
+/**
  * Register Constants	
  */
-`define RegAddrBus			4:0			//Regfile模块的地址线宽度  
-`define RegBus 				31:0		//Regfile模块的数据线宽度  
-`define DoubleRegBus		63:0 		//两倍Regfile模块的数据线宽度  
-`define RegWidth 			32			//通用寄存器的宽度
-`define RegNum  			32			//通用寄存器的数量  
-`define RegNumLog2 			5			//寻址通用寄存器使用的地址位数  
-`define NOPRegAddr 			5'b00000  
+`define RegAddrBus			4:0
+`define RegBus 				31:0
+`define DoubleRegBus		63:0
+`define RegWidth 			32
+`define RegNum  			32
+`define RegNumLog2 			5
+`define NOPRegAddr 			5'b00000
 
 /**
  * Division Constant

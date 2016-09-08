@@ -3,9 +3,16 @@ module cpu (
 		input wire	clk,
 		input wire 	rst,
 
-		input	wire[`RegBus]	rom_data_in,
-		output	wire[`RegBus]	rom_addr_out,
-		output	wire			rom_ce_out
+		input  wire[`RegBus]	rom_data_in,
+		output wire[`RegBus]	rom_addr_out,
+		output	wire			rom_ce_out,
+
+		input 	wire[`RegBus]	ram_data_in,
+		output 	wire[`RegBus]	ram_addr_out,
+		output	wire[`RegBus]	ram_data_out,
+		output 	wire			ram_we_out,
+		output	wire[3:0]		ram_sel_out,
+		output	wire			ram_ce_out
 
 	);
 	
@@ -30,6 +37,7 @@ module cpu (
 	wire 				id_nex_inst_delayslot_out;
 	wire[`RegBus]		id_branch_tar_addr_out;
 	wire				id_branch_flag_out;
+	wire[`InstBus]		id_inst_out;
 
 	// -> EXE
 	wire[`AluOpBus]		ex_aluop_in;
@@ -41,6 +49,7 @@ module cpu (
 	wire[`DoubleRegBus]	hilo_temp_in;
 	wire[1:0] 			cnt_in;
 	wire[`RegBus]		ex_link_addr_in;
+	wire[`InstBus]		ex_inst_in;
 	wire				ex_in_delayslot_in;
 
 	// EXE ->
@@ -51,6 +60,10 @@ module cpu (
 	wire[`RegBus]		ex_hi_out;
 	wire[`RegBus]		ex_lo_out;
 	wire				ex_whilo_out;
+
+	wire[`AluOpBus]		ex_aluop_out;
+	wire[`RegBus]		ex_mem_addr_out;
+	wire[`RegBus]		ex_src2_data_out;
 
 	wire[`DoubleRegBus]	hilo_temp_out;
 	wire[1:0] 			cnt_out;
@@ -63,6 +76,10 @@ module cpu (
 	wire[`RegBus]		mem_hi_in;
 	wire[`RegBus]		mem_lo_in;
 	wire				mem_whilo_in;
+
+	wire[`AluOpBus]		mem_aluop_in;
+	wire[`RegBus]		mem_mem_addr_in;
+	wire[`RegBus]		mem_src2_data_in;
 
 	// MEM ->
 	wire				mem_wreg_out;
@@ -177,6 +194,7 @@ module cpu (
 			.src2_data_out	(id_src2_data_out),
 			.dest_addr_out	(id_dest_addr_out),
 			.wreg_out		(id_wreg_out),
+			.inst_out 		(id_inst_out),
 			.stall_req 		(stall_req_id)
 		);
 
@@ -226,6 +244,7 @@ module cpu (
 			.id_link_addr			(id_link_addr_out),
 			.id_in_delayslot		(id_in_delayslot_out),
 			.next_inst_delayslot_in	(id_nex_inst_delayslot_out),
+			.id_inst  				(id_inst_out),
 			.ex_link_addr			(ex_link_addr_in),
 			.ex_in_delayslot		(ex_in_delayslot_in),
 			.next_inst_delayslot_out	(in_delayslot),
@@ -234,6 +253,7 @@ module cpu (
 			.ex_src1_data	(ex_src1_data_in),
 			.ex_src2_data	(ex_src2_data_in),
 			.ex_dest_addr	(ex_dest_addr_in),
+			.ex_inst 		(ex_inst_in),
 		 	.ex_wreg 		(ex_wreg_in)
 		);
 
@@ -268,6 +288,8 @@ module cpu (
 			.link_addr_in	(ex_link_addr_in),
 			.in_delayslot_in	(ex_in_delayslot_in),
 
+			.inst_in 		(ex_inst_in),
+
 			.dest_addr_out	(ex_dest_addr_out),
 			.wreg_out		(ex_wreg_out),
 			.dest_data_out	(ex_dest_data_out),
@@ -283,6 +305,10 @@ module cpu (
 			.div_opdata2_out	(div_opdata2),
 			.div_start_out		(div_start),
 			.signed_div_out		(signed_div),
+
+			.aluop_out			(ex_aluop_out),
+			.mem_addr_out		(ex_mem_addr_out),
+			.src2_data_out		(ex_src2_data_out),
 
 			.stall_req 	(stall_req_ex)
 		);
@@ -305,12 +331,20 @@ module cpu (
 			.hilo_in 		(hilo_temp_out),
 			.cnt_in			(cnt_out),
 
+			.ex_aluop		(ex_aluop_out),
+			.ex_mem_addr	(ex_mem_addr_out),
+			.ex_src2_data	(ex_src2_data_out),
+
 			.hilo_out 		(hilo_temp_in),
 			.cnt_out		(cnt_in),
 
 			.mem_dest_addr	(mem_dest_addr_in),
 			.mem_wreg		(mem_wreg_in),
 			.mem_dest_data	(mem_dest_data_in),
+
+			.mem_aluop		(mem_aluop_in),
+			.mem_mem_addr	(mem_mem_addr_in),
+			.mem_src2_data	(mem_src2_data_in),
 
 			.mem_hi 		(mem_hi_in),
 			.mem_lo 		(mem_lo_in),
@@ -329,13 +363,26 @@ module cpu (
 			.lo_in		(mem_lo_in),
 			.whilo_in 	(mem_whilo_in),
 
+			.aluop_in		(mem_aluop_in),
+			.mem_addr_in	(mem_mem_addr_in),
+			.src2_data_in	(mem_src2_data_in),
+
+			.mem_data_in 	(ram_data_in),
+
 			.dest_addr_out	(mem_dest_addr_out),
 			.wreg_out		(mem_wreg_out),
 			.dest_data_out	(mem_dest_data_out),
 
 			.hi_out		(mem_hi_out),
 			.lo_out		(mem_lo_out),
-			.whilo_out	(mem_whilo_out)
+			.whilo_out	(mem_whilo_out),
+
+			.mem_addr_out(ram_addr_out),
+			.mem_data_out(ram_data_out),
+			.mem_sel_out (ram_sel_out),
+			.mem_we_out  (ram_we_out),
+			.mem_ce_out	 (ram_ce_out)
+
 		);
 
 	// mem/wb instantiation

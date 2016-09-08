@@ -3,7 +3,7 @@ module decode (
         input wire                rst,
         
         input wire[`InstAddrBus]  pc_in,
-        input wire[`InstAddrBus]  inst_in,
+        input wire[`InstBus]      inst_in,
 
         input wire[`RegBus]       src1_data_in,
         input wire[`RegBus]       src2_data_in,
@@ -38,9 +38,13 @@ module decode (
         output reg[`RegAddrBus]   dest_addr_out,
         output reg                wreg_out,
 
+        output wire[`InstBus]     inst_out,
+
         output reg stall_req
 
     );
+
+    assign inst_out = inst_in;
 
     // opnum
     wire[5:0] op  = inst_in[31:26];
@@ -627,6 +631,109 @@ module decode (
                             end
                         end
                     endcase
+                end
+                `LB: begin
+                    wreg_out <= `True;
+                    aluop_out <= `LB_OP;
+                    alusel_out <= `RES_LOAD_STORE;
+                    src1_read_out <= `True;
+                    src2_read_out <= `False;
+                    dest_addr_out <= inst_in[20:16];
+                    inst_valid <= `InstValid;
+                end
+                `LBU: begin
+                    wreg_out <= `True;
+                    aluop_out <= `LBU_OP;
+                    alusel_out <= `RES_LOAD_STORE;
+                    src1_read_out <= `True;
+                    src2_read_out <= `False;
+                    dest_addr_out <= inst_in[20:16];
+                    inst_valid <= `InstValid;
+                end
+                `LH: begin
+                    wreg_out <= `True;
+                    aluop_out <= `LH_OP;
+                    alusel_out <= `RES_LOAD_STORE;
+                    src1_read_out <= `True;
+                    src2_read_out <= `False;
+                    dest_addr_out <= inst_in[20:16];
+                    inst_valid <= `InstValid;
+                end
+                `LHU: begin
+                    wreg_out <= `True;
+                    aluop_out <= `LHU_OP;
+                    alusel_out <= `RES_LOAD_STORE;
+                    src1_read_out <= `True;
+                    src2_read_out <= `False;
+                    dest_addr_out <= inst_in[20:16];
+                    inst_valid <= `InstValid;
+                end
+                `LW: begin
+                    wreg_out <= `True;
+                    aluop_out <= `LW_OP;
+                    alusel_out <= `RES_LOAD_STORE;
+                    src1_read_out <= `True;
+                    src2_read_out <= `False;
+                    dest_addr_out <= inst_in[20:16];
+                    inst_valid <= `InstValid;
+                end
+                `LWL: begin
+                    wreg_out <= `True;
+                    aluop_out <= `LWL_OP;
+                    alusel_out <= `RES_LOAD_STORE;
+                    src1_read_out <= `True;
+                    src2_read_out <= `True;
+                    dest_addr_out <= inst_in[20:16];
+                    inst_valid <= `InstValid;
+                end
+                `LWR: begin
+                    wreg_out <= `True;
+                    aluop_out <= `LWR_OP;
+                    alusel_out <= `RES_LOAD_STORE;
+                    src1_read_out <= `True;
+                    src2_read_out <= `True;
+                    dest_addr_out <= inst_in[20:16];
+                    inst_valid <= `InstValid;
+                end
+                `SB: begin
+                    wreg_out <= `False;
+                    aluop_out <= `SB_OP;
+                    alusel_out <= `RES_LOAD_STORE;
+                    src1_read_out <= `True;
+                    src2_read_out <= `True;
+                    inst_valid <= `InstValid;
+                end
+                `SH: begin
+                    wreg_out <= `False;
+                    aluop_out <= `SH_OP;
+                    alusel_out <= `RES_LOAD_STORE;
+                    src1_read_out <= `True;
+                    src2_read_out <= `True;
+                    inst_valid <= `InstValid;
+                end
+                `SW: begin
+                    wreg_out <= `False;
+                    aluop_out <= `SW_OP;
+                    alusel_out <= `RES_LOAD_STORE;
+                    src1_read_out <= `True;
+                    src2_read_out <= `True;
+                    inst_valid <= `InstValid;
+                end
+                `SWL: begin
+                    wreg_out <= `False;
+                    aluop_out <= `SWL_OP;
+                    alusel_out <= `RES_LOAD_STORE;
+                    src1_read_out <= `True;
+                    src2_read_out <= `True;
+                    inst_valid <= `InstValid;
+                end
+                `SWR: begin
+                    wreg_out <= `False;
+                    aluop_out <= `SWL_OP;
+                    alusel_out <= `RES_LOAD_STORE;
+                    src1_read_out <= `True;
+                    src2_read_out <= `True;
+                    inst_valid <= `InstValid;
                 end
                 default: begin
                 end
