@@ -16,6 +16,10 @@ module memory (
 
 		input wire[`RegBus]		mem_data_in,
 
+		input wire		llbit_in,
+		input wire		wb_llbit_we_in,
+		input wire		wb_llbit_data_in,
+
 		output reg[`RegAddrBus]	dest_addr_out,
 		output reg 				wreg_out,
 		output reg[`RegBus]		dest_data_out,
@@ -23,6 +27,9 @@ module memory (
 		output reg[`RegBus]		hi_out,
 		output reg[`RegBus]		lo_out,
 		output reg 				whilo_out,
+
+		output reg 		llbit_we_out,
+		output reg 		llbit_data_out,
 
 		output reg[`RegBus]		mem_addr_out,
 		output wire				mem_we_out,
@@ -35,33 +42,51 @@ module memory (
 	wire[`RegBus]	zero32;
 	reg 			mem_we;
 
+	reg 			llbit;
+
 	assign mem_we_out = mem_we;
 	assign zero32 = `ZeroWord;
 
 	always @( * ) begin
 		if (rst == `RstEnable) begin
-			dest_addr_out <= `NOPRegAddr;
-			wreg_out      <= `False;
-			dest_data_out <= `ZeroWord;
-			hi_out        <= `ZeroWord;
-			lo_out        <= `ZeroWord;
-			whilo_out     <= `False;
-			mem_addr_out  <= `ZeroWord;
-			mem_we        <= `False;
-			mem_sel_out   <= 4'b0000;
-			mem_data_out  <= `ZeroWord;
-			mem_ce_out    <= `ChipDisable;
+			llbit <= `False;
 		end else begin
-			dest_addr_out <= dest_addr_in;
-			wreg_out      <= wreg_in;
-			dest_data_out <= dest_data_in;
-			hi_out        <= hi_in;
-			lo_out        <= lo_in;
-			whilo_out     <= whilo_in;
-			mem_addr_out  <= `ZeroWord;
-			mem_we        <= `False;
-			mem_sel_out   <= 4'b1111;
-			mem_ce_out    <= `ChipDisable;
+			if (wb_llbit_we_in == `True) begin
+				llbit <= wb_llbit_we_in;
+			end else begin
+				llbit <= llbit_in;
+			end
+		end
+	end
+
+	always @( * ) begin
+		if (rst == `RstEnable) begin
+			dest_addr_out  <= `NOPRegAddr;
+			wreg_out       <= `False;
+			dest_data_out  <= `ZeroWord;
+			hi_out         <= `ZeroWord;
+			lo_out         <= `ZeroWord;
+			whilo_out      <= `False;
+			mem_addr_out   <= `ZeroWord;
+			mem_we         <= `False;
+			mem_sel_out    <= 4'b0000;
+			mem_data_out   <= `ZeroWord;
+			mem_ce_out     <= `ChipDisable;
+			llbit_we_out   <= `False;
+			llbit_data_out <= 1'b0;
+		end else begin
+			dest_addr_out  <= dest_addr_in;
+			wreg_out       <= wreg_in;
+			dest_data_out  <= dest_data_in;
+			hi_out         <= hi_in;
+			lo_out         <= lo_in;
+			whilo_out      <= whilo_in;
+			mem_addr_out   <= `ZeroWord;
+			mem_we         <= `False;
+			mem_sel_out    <= 4'b1111;
+			mem_ce_out     <= `ChipDisable;
+			llbit_we_out   <= `False;
+			llbit_data_out <= 1'b0;
 			case (aluop_in)
 				`LB_OP:     begin		
 					mem_addr_out <= mem_addr_in;
@@ -303,6 +328,29 @@ module memory (
 									mem_sel_out  <= 4'b0000;
 								end
 							endcase
+				end
+				`LL_OP: 	begin
+					mem_addr_out   <= mem_addr_in;
+					mem_we         <= `False;
+					dest_data_out  <= mem_data_in;
+					llbit_we_out   <= `True;
+					llbit_data_out <= 1'b1;
+					mem_sel_out    <= 4'b1111;
+					mem_ce_out     <= `ChipEnable;
+				end
+				`SC_OP: 	begin
+					if (llbit == 1'b1) begin
+						mem_addr_out   <= mem_addr_in;
+						mem_we         <= `True;
+						mem_data_out   <= src2_data_in;
+						dest_data_out  <= 32'b1;
+						llbit_we_out   <= `True;
+						llbit_data_out <= 1'b0;
+						mem_sel_out    <= 4'b1111;
+						mem_ce_out     <= `ChipEnable;
+					end else begin
+						dest_data_out  <= 32'b0;
+					end
 				end 
 				default: begin   
 				end

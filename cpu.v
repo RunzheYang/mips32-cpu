@@ -90,6 +90,9 @@ module cpu (
 	wire[`RegBus]		mem_lo_out;
 	wire				mem_whilo_out;
 
+	wire	mem_llbit_we;
+	wire	mem_llbit_data;
+
 	// -> WB
 	wire				wb_wreg_in;
 	wire[`RegAddrBus]	wb_dest_addr_in;
@@ -124,7 +127,11 @@ module cpu (
 	wire[`DoubleRegBus]	div_result;
 	wire				div_ready;
 
- 
+ 	// LLbit
+ 	wire 		llbit_we;
+ 	wire 		llbit_data_in;
+ 	wire 		llbit_data_out;
+ 	
 
 	//CTRL
 	ctrl ctrl0 (
@@ -371,6 +378,10 @@ module cpu (
 
 			.mem_data_in 	(ram_data_in),
 
+			.llbit_in			(llbit_data_out),
+			.wb_llbit_we_in		(llbit_we),
+			.wb_llbit_data_in	(llbit_data_in),
+
 			.dest_addr_out	(mem_dest_addr_out),
 			.wreg_out		(mem_wreg_out),
 			.dest_data_out	(mem_dest_data_out),
@@ -378,6 +389,9 @@ module cpu (
 			.hi_out		(mem_hi_out),
 			.lo_out		(mem_lo_out),
 			.whilo_out	(mem_whilo_out),
+
+			.llbit_we_out	(mem_llbit_we),
+			.llbit_data_out	(mem_llbit_data),
 
 			.mem_addr_out(ram_addr_out),
 			.mem_data_out(ram_data_out),
@@ -400,7 +414,13 @@ module cpu (
 			.mem_lo 	(mem_lo_out),
 			.mem_whilo 	(mem_whilo_out),
 
+			.mem_llbit_we	(mem_llbit_we),
+			.mem_llbit_data	(mem_llbit_data),
+
 			.stall 		(stall),
+
+			.wb_llbit_we	(llbit_we),
+			.wb_llbit_data	(llbit_data_in),
 
 			.wb_dest_addr	(wb_dest_addr_in),
 			.wb_wreg		(wb_wreg_in),
@@ -423,6 +443,17 @@ module cpu (
 
 			.result_out (div_result),
 			.ready_out 	(div_ready)
+		);
+
+	llbit_reg llbit_reg0 (
+			.clk	(clk),
+			.rst 	(rst),
+
+			.flush	(1'b0),
+
+			.we 		(llbit_we),
+			.llbit_in 	(llbit_data_in),
+			.llbit_out 	(llbit_data_out)
 		);
 
 endmodule

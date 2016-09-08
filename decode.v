@@ -754,6 +754,24 @@ module decode (
                     src2_read_out <= `True;
                     inst_valid <= `InstValid;
                 end
+                `LL: begin
+                    wreg_out      <= `True;
+                    aluop_out     <= `LL_OP;
+                    alusel_out    <= `RES_LOAD_STORE;
+                    src1_read_out <= `True;
+                    src2_read_out <= `False;
+                    dest_addr_out <= inst_in[20:16];
+                    inst_valid    <= `InstValid;
+                end
+                `SC: begin
+                    wreg_out      <= `True;
+                    aluop_out     <= `SC_OP;
+                    alusel_out    <= `RES_LOAD_STORE;
+                    src1_read_out <= `True;
+                    src2_read_out <= `True;
+                    dest_addr_out <= inst_in[20:16];
+                    inst_valid    <= `InstValid;
+                end
                 default: begin
                 end
             endcase
