@@ -19,6 +19,9 @@ module decode (
 
         input wire              in_delayslot_in,
 
+        //for load related problem
+        input wire[`AluOpBus]   ex_aluop_in,
+
         output reg              next_inst_delayslot_out,
 
         output reg              branch_flag_out,
@@ -40,9 +43,11 @@ module decode (
 
         output wire[`InstBus]     inst_out,
 
-        output reg stall_req
+        output wire stall_req
 
     );
+    
+
 
     assign inst_out = inst_in;
 
@@ -63,11 +68,27 @@ module decode (
 
     wire[`RegBus] imm_sll2;
 
+
+    reg stall_src1_loadrelated;
+    reg stall_src2_loadrelated;
+    wire pre_inst_is_load;
+
     assign pc_plus_4 = pc_in + 4;
     assign pc_plus_8 = pc_in + 8;
 
     // imm_sll2: offset << 2 then extend to 32 bits
     assign imm_sll2 = {{14{inst_in[15]}}, inst_in[15:0], 2'b00};
+
+    assign stall_req = stall_src1_loadrelated | stall_src2_loadrelated;
+    assign pre_inst_is_load = ((ex_aluop_in == `LB_OP) || 
+                               (ex_aluop_in == `LBU_OP)||
+                               (ex_aluop_in == `LH_OP) ||
+                               (ex_aluop_in == `LHU_OP)||
+                               (ex_aluop_in == `LW_OP) ||
+                               (ex_aluop_in == `LWR_OP)||
+                               (ex_aluop_in == `LWL_OP)||
+                               (ex_aluop_in == `LL_OP) ||
+                               (ex_aluop_in == `SC_OP)) ? `True : `False;
 
     // translate instructions
     always @( * ) begin
@@ -82,7 +103,6 @@ module decode (
             src1_addr_out <= `NOPRegAddr;
             src2_addr_out <= `NOPRegAddr;
             imm           <= `ZeroWord;
-            stall_req     <= `NoStop;
             link_addr_out <= `ZeroWord;
             branch_tar_addr_out     <= `ZeroWord;
             branch_flag_out         <= `NotBranch;
@@ -98,7 +118,6 @@ module decode (
             src1_addr_out <= inst_in[25:21];
             src2_addr_out <= inst_in[20:16];
             imm           <= `ZeroWord;
-            stall_req     <= `NoStop;
             link_addr_out <= `ZeroWord;
             branch_tar_addr_out     <= `ZeroWord;
             branch_flag_out         <= `NotBranch;
@@ -729,7 +748,7 @@ module decode (
                 end
                 `SWR: begin
                     wreg_out <= `False;
-                    aluop_out <= `SWL_OP;
+                    aluop_out <= `SWR_OP;
                     alusel_out <= `RES_LOAD_STORE;
                     src1_read_out <= `True;
                     src2_read_out <= `True;
@@ -777,9 +796,15 @@ module decode (
 
     // src1
     always @( * ) begin
+        stall_src1_loadrelated <= `NoStop;
         if (rst == `RstEnable) begin
-            src1_data_out <= `ZeroWord;
-        //exe first    
+            src1_data_out <= `ZeroWord; 
+        end else if (pre_inst_is_load == `True
+            && ex_dest_addr_in == src1_addr_out
+            && src1_read_out == `True) 
+        begin
+            stall_src1_loadrelated <= `Stop;
+        //exe first   
         end else if (src1_read_out == `True 
             && ex_wreg_in == `True 
             && ex_dest_addr_in == src1_addr_out) 
@@ -802,8 +827,14 @@ module decode (
 
     // src2
     always @( * ) begin
+        stall_src2_loadrelated <= `NoStop;
         if (rst == `RstEnable) begin
             src2_data_out <= `ZeroWord;
+        end else if (pre_inst_is_load == `True
+            && ex_dest_addr_in == src2_addr_out
+            && src2_read_out == `True) 
+        begin
+            stall_src2_loadrelated <= `Stop;
         //exe first    
         end else if (src2_read_out == `True 
             && ex_wreg_in == `True 

@@ -92,6 +92,9 @@
 `define SWL			6'b101010
 `define SWR			6'b101110
 
+`define LL 			6'b110000
+`define SC 			6'b111000
+
 //ALU operaiton type
 `define AND_OP		8'b00100100
 `define OR_OP		8'b00100101
@@ -159,6 +162,9 @@
 `define SW_OP 		8'b10101011
 `define SWL_OP		8'b10101010
 `define SWR_OP		8'b10101110
+
+`define LL_OP 		8'b10110000
+`define SC_OP 		8'b10111000
 
 `define NOP_OP		8'b00000000
 

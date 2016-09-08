@@ -175,7 +175,9 @@ module cpu (
 			.mem_dest_data_in	(mem_dest_data_out),
 			.mem_wreg_in		(mem_wreg_out),
 
-			.in_delayslot_in   (in_delayslot),
+			.in_delayslot_in   	(in_delayslot),
+
+			.ex_aluop_in 	 	(ex_aluop_out),
 
 			.next_inst_delayslot_out	(id_nex_inst_delayslot_out),
 			.branch_flag_out			(id_branch_flag_out),
