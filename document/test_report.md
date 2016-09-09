@@ -64,16 +64,16 @@ The write back stage is completed by the registers themselves. When the register
 
 ## Experiment and Result
 ### Logical & Bitwise Shift
-[Test Case: LogicShift.S]()
+[Test Case: LogicShift.S](https://github.com/RunzheYang/mips32-cpu/blob/master/test_cases/LogicShift.S)
 ![](logicalshift1.png)
 ![](logicalshift2.png)
 ![](shiftnop1.png)
 ### Data Transfer (move)
-[Test Case: Move.S]()
+[Test Case: Move.S](https://github.com/RunzheYang/mips32-cpu/blob/master/test_cases/Move.S)
 ![](move1.png)
 ![](move2.png)
 ### Arithmetic
-[Test Case: SimpleArithematic.S]()
+[Test Case: SimpleArithematic.S](https://github.com/RunzheYang/mips32-cpu/blob/master/test_cases/SimpleArithematic.S)
 ![](arithe1.png)
 ![](arithe2.png)
 ![](arithe_i.png)
@@ -81,34 +81,34 @@ The write back stage is completed by the registers themselves. When the register
 ![](clzclo2.png)
 ![](mul.png)
 
-[Test Case: MultiCycle.S]()
+[Test Case: MultiCycle.S](https://github.com/RunzheYang/mips32-cpu/blob/master/test_cases/MultiCycle.S)
 ![](maddmsub1.png)
 ![](maddmsub2.png)
 
-[Test Case: Div.S]()
+[Test Case: Div.S](https://github.com/RunzheYang/mips32-cpu/blob/master/test_cases/Div.S)
 ![](div1.png)
 ![](div2.png)
 ![](div3.png)
 ### Conditional branch & Unconditional jump
-[Test Case: Jump.S]()
+[Test Case: Jump.S](https://github.com/RunzheYang/mips32-cpu/blob/master/test_cases/Jump.S)
 ![](jp1.png)
 ![](jp2.png)
 ![](jp3.png)
 
-[Test Case: Branch.S]()
+[Test Case: Branch.S](https://github.com/RunzheYang/mips32-cpu/blob/master/test_cases/Branch.S)
 ![](br2.png)
 ![](br2.png)
 ![](br3.png)
 ![](br4.png)
 ![](br5.png)
 ### Data Transfer (load, store)
-[Test Case: LoadStore.S]()
+[Test Case: LoadStore.S](https://github.com/RunzheYang/mips32-cpu/blob/master/test_cases/LoadStore.S)
 ![](ls1.png)
 ![](ls2.png)
 ![](ls3.png)
 ![](ls4.png)
 
-[Test Case: LlSc.S]()
+[Test Case: LlSc.S](https://github.com/RunzheYang/mips32-cpu/blob/master/test_cases/LlSc.S)
 ![](llsc1.png)
 ![](llsc2.png)
 
@@ -126,5 +126,5 @@ The write back stage is completed by the registers themselves. When the register
 
 ## Author Info
 __Runzhe Yang (ID: 5140309562)__
-[ACM Honored Class](http://acm.sjtu.edu.cn/home)
+[ACM Honored Class.](http://acm.sjtu.edu.cn/home)
 [Zhiyuan College, Shanghai Jiao Tong Univ.](http://zhiyuan.sjtu.edu.cn)

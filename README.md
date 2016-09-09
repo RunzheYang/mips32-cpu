@@ -1,5 +1,3 @@
 # mips32-cpu
-- 2014 ACMCA Summer Project
-- Main reference: [this blog](http://blog.csdn.net/leishangwen/article/category/5723475)
-
-- [Final Report]()
+2014 ACMCA Summer Project
+The [test report](https://github.com/RunzheYang/mips32-cpu/blob/master/document/test_report.md) is available now.
