@@ -34,12 +34,14 @@ As the figure shows, the minimal SOPC used in this experiment contains three com
 
 ### Instruction Fetch
 Related modules: *pc_reg.v*, *inst_rom.v*, *control.v*.
+
 The function of *pc_reg.v* is to compute and store the address of current instruction. *inst_rom.v* will read the address sent by *pc_reg.v* and then send the corresponding instruction to the *if_id.v* module. 
 Since this mips32 processor supports multi-cycle instructions, in *pc_reg.v* I use a port *stall* to receive the command from *control.v* to keep PC unchanged if there is a multi-cycle instruction on the pipeline. Further, for supporting jump and branch, I preserve two ports *branch_flag_in* and *branch_tar_addr_in* to receive the signal from instruction decode stage.
 (An illustration will be post here soon)
 
 ### Instruction Decode
 Related modules: *decode.v, reg_file.v*, *control.v*.
+
 The mission of this stage is to translate the instruction and extract the source operand from the instruction. The *decode.v* module parse the instruction to get the *aluop* (ALU operation type) and *alusel* (ALU result selection) and require the corresponding data form *reg_file.v*, then send all these information to the *id_ex.v* module.
 For supporting **branch delay slot**, the *decode.v* is designed with two ports *in_delayslot_in* and *next_inst_delayslot_out*. Since it doesn't support **load delay slot**, *ex_aluop_in* is a load instruction and share the same source operand register with current instruction, it will send a stall signal to the *ctrl.v*.
 ```verilog
@@ -50,16 +52,19 @@ For supporting **branch delay slot**, the *decode.v* is designed with two ports 
 
 ### Execution
 Related modules: *execution.v*, *div.v*, *control.v*.
+
 The *execution.v* module works for calculation the result of instruction. To avoid **Data Hard**, I use *dest_data_out* will also send to *decode.v* module to achieve __forwarding__. Because *madd*, *maddu*, *msub* and *msubu* will occupy 2 cycles, then *execution.v* module also be able to send *stall* request to the *ctrl.v* module. *div* and *divu* will use 32 cycles to calculate the quotient and remainder, and store them in the *hilo_reg*. A *div.v* module is designed for accomplishing that.
 (An illustration will be post here soon)
 
 ### Memory Access
 Related modules: *memory.v*, *llbit_reg.v*, *control.v*.
+
 The *memory.v* module is used to store or fetch data as store or load instruction command. The calculation of target address is also included in this part. Since the load instruction may cause a data hazard, *memory.v* module is also able to send the *stall* request. *ll* and *sc* are two special instructions which need a LLbit register to check whether the RMW series is undisturbed.
 (An illustration will be post here soon)
 
 ### Write Back
 Related modules: *reg_file.v*, *hilo_reg.v*.
+
 The write back stage is completed by the registers themselves. When the register receives a _WriteEnable_ signal, it will update the specified address to new coming data.
 
 ## Experiment and Result
@@ -126,5 +131,7 @@ The write back stage is completed by the registers themselves. When the register
 
 ## Author Info
 __Runzhe Yang (ID: 5140309562)__
+
 [ACM Honored Class.](http://acm.sjtu.edu.cn/home)
+
 [Zhiyuan College, Shanghai Jiao Tong Univ.](http://zhiyuan.sjtu.edu.cn)
