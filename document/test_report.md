@@ -1,5 +1,5 @@
 # The Design of Five-stage Pipeline Processor base on MIPS32
-This document is an technical report for [ACMCA2016](http://202.120.38.22:1000/wiki/index.php?title=Course:ACMCA2016) Summer Session Project. In this project, a simple five-stage mips32 pipeline processor is implemented in __Verilog HDL__. My processor have fully supported the integer instruction set of MIPS32 and successfully passed all test cases.
+This document is a technical report for [ACMCA2016](http://202.120.38.22:1000/wiki/index.php?title=Course:ACMCA2016) Summer Session Project. In this project, a simple five-stage mips32 pipeline processor is implemented in __Verilog HDL__. My processor have fully supported the integer instruction set of MIPS32 and successfully passed all test cases.
 
 ## Overview
 My implementation is mainly followed with [this blog](http://blog.csdn.net/leishangwen/article/category/5723475/3). It is designed in __Harvard Structure__ rather than von Neumann Structure. All the instructions are stored in the ROM and all the data is stored in another separated memory (RAM), so that it easily prevents structure hazard.
